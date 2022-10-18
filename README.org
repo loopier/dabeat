@@ -1,4 +1,4 @@
-#+title: Cançó infinita
+#+title: dabeat
 
 * estructura
 - A A B
