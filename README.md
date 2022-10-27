@@ -42,11 +42,14 @@
    - 2 sequences for low-end part B: `...`
    - 2 sequences for high-end part A: `...`
    - 2 sequences for high-end part B: `...`
-4. create frases:
+4. create phrases:
    - bassA: `[A1.pseq(3), A2.pseq(1)]`
    - bassB: `[B1.pseq(3), B2.pseq(1)]`
    - altoA: `[A1.pseq(3), A2.pseq(1)]`
    - altoB: `[B1.pseq(3), B2.pseq(1)]`
-5. create sequence:
+5. create master sequence:
    - bass: `[A,A,B].pseq`
    - alto: `[A,A,B].pseq`
+6. EQ: set `cutoff` according to the parts playing
+   - HPF + LPF if both alto and bass are playing
+   - LPF + offset if only bass is playing
