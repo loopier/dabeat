@@ -28,7 +28,8 @@
        b. si només sona el greu: cutoff + un extra per ocupar més espectre agut
 
 
-# Meta code
+* meta code
+
 1. load a sample
 2. chop twice in N chunks, determined with 's1': one for high-pitch, one for low-pitch
 3. choose chunks favouring those that are closer to each other
