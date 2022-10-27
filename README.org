@@ -31,9 +31,21 @@
 * meta code
 
 1. load a sample
-2. chop twice in N chunks, determined with 's1': one for high-pitch, one for low-pitch
-3. choose chunks favouring those that are closer to each other
-4. use step #3 to create structure: A=3+1||6+2, B=3+1||6+2
-   setp #3 must be used 4 times: 2 times for A (3+1), 2 times for B (3+1) so we
-   end up with 4 different sets of chunks
-5. create sequence [A,A,B]
+2. choose chunks favouring those that are closer to each other
+3. create 8 sequences of chunks with step #2:
+   - 2 sequences for low-end part A:
+     ```
+     bass.A1 = chunks.scramble(N);
+     bass.A2 = chunks.scramble(N);
+     ```
+   - 2 sequences for low-end part B: `...`
+   - 2 sequences for high-end part A: `...`
+   - 2 sequences for high-end part B: `...`
+4. create frases:
+   - bassA: `[A1.pseq(3), A2.pseq(1)]`
+   - bassB: `[B1.pseq(3), B2.pseq(1)]`
+   - altoA: `[A1.pseq(3), A2.pseq(1)]`
+   - altoB: `[B1.pseq(3), B2.pseq(1)]`
+5. create sequence:
+   - bass: `[A,A,B].pseq`
+   - alto: `[A,A,B].pseq`
