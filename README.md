@@ -1,17 +1,18 @@
-#+title: dabeat
+# Dabeat
 
-* estructura
+# resum reunió
+## estructura
 - A A B
 - A = 3+1 || 6+2
 - B = 3+1 || 6+2
 
-* loop bd, sn, hh
+## loop bd, sn, hh
 
 - delays determinats a l'INIT
 - delay per track + delay global
 - probabilitats en alguns beats: `one_in(x)`
 
-* samples
+## samples
 - chop(n) UN SOL SAMPLE
 - rate: beat_stretch proporcional a la durada del sample
 - ratio: rate transposat a tò (nota de l'escala)
@@ -28,7 +29,7 @@
        b. si només sona el greu: cutoff + un extra per ocupar més espectre agut
 
 
-* meta code
+# meta code
 
 1. load a sample
 2. choose chunks favouring those that are closer to each other
