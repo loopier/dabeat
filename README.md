@@ -53,3 +53,4 @@
 6. EQ: set `cutoff` according to the parts playing
    - HPF + LPF if both alto and bass are playing
    - LPF + offset if only bass is playing
+7. remix both bass and alto
