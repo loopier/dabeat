@@ -109,7 +109,7 @@ function dabeat(file) {
         let bassChunks = chop(starterPlayer.buffer.duration, 16); // 16 slices
         let xufle = choosen(bassChunks, 16);
         console.log("chunks:", bassChunks);
-        // play(starterPlayer, bassChunks);
+        play(starterPlayer, bassChunks);
     }).toDestination();
 }
 
