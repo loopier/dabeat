@@ -55,12 +55,14 @@ La bateria té un `delay` global i cada kit té el seu propi `delay` afegit.
 
 Tots aquests delays són modulables amb una sola variable `complexitat del beat` o `cb` determinada per l'usuari.
 
+Els paràmetres originals pel delay de bateria són:
 - `delay bateria`: delay global de tota la bateria. 
                 random(0, 0.05) + ([-1 | 1] * `cb` / 90)
 - `delay kick`: random(0, 0.087) + ([-1 | 1] * `cb` / 30)
 - `delay snare`: random(0, 0.076) + ([-1.5 | 1.5] * `cb` / 30)
 - `delay hihat`: random((-0.01), (0.05 + (0.005 * `cb`))) -- el codi de sonic-pi diu: `rrand(-0.01,0.05+0.005*cb)`, no sé quin és l'ordre de precedència dels operadors en Sonic-Pi
 
+Els paràmetres originals de mixing per bateria són:
 - `volum bateria`: 1.1 
 - `volum kick`: general * rand(1.8, 2.0)
 - `volum snare`: general * rand(1.8, 2.0)
@@ -82,11 +84,11 @@ Els paràmetres pels samples aguts són:
 
 - **on/off**: si sona o no ve determinat per l'usuari
 - **rate**: el sample agut va a 2x la velocitat, una octava més agut
-- **volum**: 0.7
-- **delay**: random(0.02, 0.07) ***PREGUNTA: els temps de delay són en segons, o és en beats?***
-- **cutoff HPF**: random(80, 90)/140 ***PREGUNTA: 140 equival a 10 kHz, 15 kHz o 20 kHz?***
-- **pan**: choose [-0.5 | 0.5] (**OJU! no és random, és un o l'altre**)
-- **durada**: random(0.6, 0.8) - durada del tall ***PREGUNTA: què passa si dura menys que el beat? i si dura més?***
+- **volum**: volum al que sona el sample agut - 0.7
+- **delay**: delay per afegir groove - random(0.02, 0.07) ***PREGUNTA: els temps de delay són en segons, o és en beats?***
+- **cutoff HPF**: filtre per separar agut i greu - random(80, 90)/140 ***PREGUNTA: 140 equival a 10 kHz, 15 kHz o 20 kHz?***
+- **pan**: espacialització stereo - choose [-0.5 | 0.5] (**OJU! no és random, és un o l'altre**)
+- **durada**: quan dura un tall (per beat) - random(0.6, 0.8) - durada del tall ***PREGUNTA: què passa si dura menys que el beat? i si dura més?***
 
 ***PREGUNTA: aquests no sé què fan. Si només són efectes, haurien d'anar a l'apartat FX (més avall)***
 
@@ -100,12 +102,12 @@ Els paràmetres pels samples aguts són:
 #### greus
 Els paràmetres pels samples greus són:
 
-- **volum**: 1.2
-- **delay**: random(0.06, 0.12)
-- **cutoff LPF**: 
+- **volum**: volum al que sona el sample greu - 1.2
+- **delay**: delay per afegir groove - random(0.06, 0.12)
+- **cutoff LPF**: filtre per separar greus d'aguts (si n'hi ha)
   - 80/140 si sona amb sample agut
   - 100 si sona sol (sense el sample agut)
-- **pan**: random(-0.09, 0)
+- **pan**: espacialització stereo - random(-0.09, 0)
 
 ***PREGUNTA: no sé què són***
 
@@ -142,7 +144,7 @@ Tots els tracks tenen efectes, però determinarem els seus paràmetres un cop es
 
 # Dubtes
 
-- en l'estructura, el sample és el mateix per totes les repeticions i el que canvia és el `chop`, o el sample també és diferent? és el mateix sample amb diferents `chop` per `a1` i `a2`, i un sample diferent per `b1` i `b2`? o és el mateix sample per les 4 variants? o un sample diferent per a cada variant?
+- en l'estructura, el sample és el mateix per totes les repeticions i el que canvia és el `chop`, o el sample també és diferent? és el mateix sample amb diferents `chop` per `a1` i `a2`, i un sample diferent per `b1` i `b2`? o és el mateix sample per les 4 variants? o un sample diferent per a cada variant
 - els volums són en `dB` o en `amp`?
 - qui forma les seqüències de bateria? són predeterminades o hi ha grooves predeterimats i surten d'allà?
 - els temps de delay són en segons o beats?
