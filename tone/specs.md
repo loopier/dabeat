@@ -7,7 +7,7 @@
 Variables que pot modificar l'usuari:
 
 - random global: randomitzar tot
-- complexitat del beat: [0-5] ??
+- complexitat del beat: afecta al delay de la bateria [0-5]
 - complexitat del sample: tria si sona només el sample greu, o l'agut i el greu
 - número de sample
 
@@ -23,7 +23,7 @@ Si es posa el mateix `seed` el resultat ha de ser el mateix.
 
 Hi ha tres tipus de sample: `bateria`, `starters` i `veu`.
 
-Els samples de bateria s'organitzen en tres sub-tracks:
+Els samples de bateria s'organitzen en tres grups:
 
 - `snares`: snares, snaps i claps
 - `kicks`
@@ -142,6 +142,7 @@ Tots els tracks tenen efectes, però determinarem els seus paràmetres un cop es
 
 # Dubtes
 
+- en l'estructura, el sample és el mateix per totes les repeticions i el que canvia és el `chop`, o el sample també és diferent? és el mateix sample amb diferents `chop` per `a1` i `a2`, i un sample diferent per `b1` i `b2`? o és el mateix sample per les 4 variants? o un sample diferent per a cada variant?
 - els volums són en `dB` o en `amp`?
 - qui forma les seqüències de bateria? són predeterminades o hi ha grooves predeterimats i surten d'allà?
 - els temps de delay són en segons o beats?
