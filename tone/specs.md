@@ -32,7 +32,7 @@ Els samples de bateria s'organitzen en tres grups:
 Els samples llargs són agafats de temes existents:
 
 - `starters`: samples curats perquè sonin bé
-- `starters-def`: samples sense curar
+- `starters-def`: samples sense curar amb components harmònics que no sempre poden quedar bé. 
 - `veu`: samples de veu
 
 ## Implementació
@@ -60,7 +60,7 @@ Els paràmetres originals pel delay de bateria són:
                 random(0, 0.05) + ([-1 | 1] * `cb` / 90)
 - `delay kick`: random(0, 0.087) + ([-1 | 1] * `cb` / 30)
 - `delay snare`: random(0, 0.076) + ([-1.5 | 1.5] * `cb` / 30)
-- `delay hihat`: random((-0.01), (0.05 + (0.005 * `cb`))) -- el codi de sonic-pi diu: `rrand(-0.01,0.05+0.005*cb)`, no sé quin és l'ordre de precedència dels operadors en Sonic-Pi
+- `delay hihat`: random((-0.01), (0.05 + (0.005 * `cb`))) -- el codi de sonic-pi diu: `rrand(-0.01,0.05+0.005*cb)`, a Ruby la multiplicació és jeràrquicament major a la suma
 
 Els paràmetres originals de mixing per bateria són:
 - `volum bateria`: 1.1 
@@ -82,10 +82,10 @@ Els paràmetres originals de mixing per bateria són:
 #### aguts
 Els paràmetres pels samples aguts són:
 
-- **on/off**: si sona o no ve determinat per l'usuari
+- **on/off**: si sona o no ve determinat per l'usuari a la variable complexitat del sample
 - **rate**: el sample agut va a 2x la velocitat, una octava més agut
 - **volum**: volum al que sona el sample agut - 0.7
-- **delay**: delay per afegir groove - random(0.02, 0.07) ***PREGUNTA: els temps de delay són en segons, o és en beats?***
+- **delay**: delay per afegir groove - random(0.02, 0.07) que retrarda l'inici del sample. La unitat és en beats.
 - **cutoff HPF**: filtre per separar agut i greu - random(80, 90)/140 ***PREGUNTA: 140 equival a 10 kHz, 15 kHz o 20 kHz?***
 - **pan**: espacialització stereo - choose [-0.5 | 0.5] (**OJU! no és random, és un o l'altre**)
 - **durada**: quan dura un tall (per beat) - random(0.6, 0.8) - durada del tall ***PREGUNTA: què passa si dura menys que el beat? i si dura més?***
