@@ -29,6 +29,13 @@
 // const player = new Tone.Player("asound.wav").toDestination();
 // const player = null;
 
+// enums
+const ScoreStructure = {
+    AAAB: 1,
+    AAAAAABB: 2,
+};
+
+
 // random seeds
 let s1 = 0;
 let s2 = 0;
@@ -37,11 +44,6 @@ let s3 = 0;
 let startpoints = [];
 // number of slices per part A and B
 const numSlices = 8;
-// define score structures
-const ScoreStructure = {
-    AAAB: 1,
-    AAAAAABB: 2,
-};
 // define structure to be used
 const scoreStructure = ScoreStructure.AAAB;
 // const scoreStructure = ScoreStructure.AAAAAABB;
@@ -69,9 +71,26 @@ let lpfAdd = 0;
 let bassPlayer = null;
 let leadPlayer = null;
 
-// startpoints
-let bass = null;
-let alto = null;
+// sampler attributes
+const lead = {};
+lead.isPlaying = false,
+lead.rate = 2.0;
+lead.amp = 0.7;
+lead.delay = Math.random(0.02, 0.07);
+lead.pan = [-0.5, 0.5][Math.floor(Math.random() * 2)]; // 2 is array length
+lead.sliceDur = Math.random(0.6,0.8);
+lead.cutoff = linexp(Math.random(80,90), 0, 140, 20, 20000);
+
+const bass = {};
+bass.rate = 1.0;
+bass.amp = 1.2;
+bass.delay = Math.random(0.06, 0.12);
+bass.pan = Math.random(-0.09, 0);
+bass.sliceDur = Math.random(0.6,0.8);
+// cutoff Hz for bass when there's NO LEAD
+bass.soloCutoff = linexp(100, 0, 140, 20, 20000);
+// cutoff Hz for bass when there's lead
+bass.cutoff = linexp(80, 0, 140, 20, 20000); // to Hz
 
 //attach a click listener to a play button
 document.querySelector('button#start')?.addEventListener('click', async () => {
@@ -82,10 +101,6 @@ document.querySelector('button#start')?.addEventListener('click', async () => {
 
 document.querySelector('button#stop')?.addEventListener('click',  () => {
     stop();
-});
-
-document.querySelector('button#hush')?.addEventListener('click',  () => {
-    Tone.Transport.dispose();
 });
 
 document.querySelector('input#slices')?.addEventListener('input',  (event) => {
@@ -134,34 +149,35 @@ function dabeat(file) {
     //////////////////          inside this function. Try it outside to solve it.
     //////////////////          Code needs to be inside because it uses the buffer duration, which is only
     //////////////////          available 'on load'...
+    //////////////////          I haven't found a way to make it work elsewhere.
+    const bassDelay = new Tone.Delay(bass.delay);
+    const bassPan = new Tone.Panner(bass.pan);
     bassPlayer = new Tone.Player(audioFile, () => {
         console.log("onload:", bassPlayer.buffer.duration);
         let chunks = chop(bassPlayer.buffer.duration, 16); // 16 slices
         let bassA = choosen(chunks, numSlices);
         let bassB = choosen(chunks, numSlices);
-        let leadA = choosen(chunks, numSlices);
-        let leadB = choosen(chunks, numSlices);
         let bassScore = createScore(scoreStructure, bassA, bassB);
-        let leadScore = createScore(scoreStructure, leadA, leadB);
         console.log("chunks:", chunks);
         console.log("bassA:", bassA);
         console.log("bassB:", bassB);
-        console.log("leadA:", leadA);
-        console.log("leadB:", leadB);
         console.log("score structure:", scoreStructure);
         console.log("bass score:", bassScore);
-        console.log("lead score:", leadScore);
-        play(bassPlayer, bassScore);
-    }).toDestination();
+        play(bassPlayer, bassScore, bass);
+    }).connect(bassDelay).connect(bassPan).toDestination();
 
-    // let alist = [0,1,2,3,4,5,6];
-    // let partA = choosen(alist, numSlices);
-    // let partB = choosen(alist, numSlices);
-    // let aaab = createScore(1, partA, partB);
-    // console.log("alist:", alist);
-    // console.log("partA:", partA);
-    // console.log("partB:", partB);
-    // console.log("AAAB:", aaab);
+    const leadDelay = new Tone.Delay(lead.delay);
+    const leadPan = new Tone.Panner(lead.pan);
+    leadPlayer = new Tone.Player(audioFile, () => {
+        let chunks = chop(leadPlayer.buffer.duration, 16); // 16 slices
+        let leadA = choosen(chunks, numSlices);
+        let leadB = choosen(chunks, numSlices);
+        let leadScore = createScore(scoreStructure, leadA, leadB);
+        console.log("leadA:", leadA);
+        console.log("leadB:", leadB);
+        console.log("lead score:", leadScore);
+        play(leadPlayer, leadScore, lead);
+    }).connect(leadDelay).connect(leadPan).toDestination();
 }
 
 // function blip() {
@@ -182,13 +198,15 @@ function dabeat(file) {
 
 function start() {
     Tone.Transport.start();
-    bass.start();
+    bassPlayer.start();
+    leadPlayer.start();
     // alto.start();
 }
 
 function stop() {
     Tone.Transport.stop();
-    bass.stop();
+    bassPlayer.stop();
+    leadPlayer.stop();
     // alto.start();
 }
 
@@ -212,18 +230,32 @@ function stop() {
 /// \brief  play a sequence of a sample chunks
 /// \param  player  Tone.Player     Sample to play
 /// \param  seq     Array           List of start points
-function play(player, seq) {
+/// \param  obj     Object          Sampler attributes
+function play(player, seq, obj) {
     console.log(player);
-    console.log(seq);
+    console.log("sequence: ", seq);
 
     let seqindex = 0;
     const loop = new Tone.Loop((time) => {
-        // console.log(time);
-        console.log(seqindex, ":", seq[seqindex]);
         seqindex = (seqindex + 1) % seq.length;
-        player.start(0, seq[seqindex]);
-    }, "8n").start(0);
+        let start = seq[seqindex];
+        player.set({
+            playbackRate: obj.rate,
+            loopEnd: obj.sliceDur,
+        }).start(
+            time,
+            start,
+            // obj.sliceDur,
+        );
+        // console.log("time:", time);
+        // console.log(seqindex, ":", start);
+        // console.log("obj:", obj);
+        // console.log("delay: ", obj.delay);
+        // console.log("rate:", obj.sliceDur);
+        // console.log("dur:", obj.sliceDur);
+    }, "8n").start();
 
+    console.log("bpm:", Tone.Transport.bpm);
     Tone.Transport.start();
 }
 
@@ -281,6 +313,14 @@ function createScore( size, partA, partB ) {
         score.push(partB);
     }
     return score.flat();
+}
+
+function linlin(value, inmin, inmax, outmin, outmax) {
+    return outmin + (outmax - outmin) * (value - inmin) / (inmax - inmin);
+}
+
+function linexp(value, inmin, inmax, outmin, outmax) {
+    return Math.pow(outmax / outmin, (value - inmin) / (inmax - inmin)) * outmin;
 }
 
 // dabeat("asound.wav");
