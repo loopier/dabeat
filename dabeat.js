@@ -35,6 +35,8 @@ let s2 = 0;
 let s3 = 0;
 // chopping the sample
 let startpoints = [];
+// number of slices per part A and B
+let numSlices = 8;
 // beat stretch proportional to sample duration
 let rate = 1;
 // pitch transposition
@@ -42,9 +44,9 @@ let ratio = 1;
 // high-low frequency separation
 let cutoff = 1587.98; // midi note 91
 // low freq sample
-let lowSamp = null;
+let lowSample = null;
 // high freq sample
-let highSamp = null;
+let highSample = null;
 // different beat stretch for high and low-pitched samples
 let lowBeatStretch = rate + ratio;
 let highBeatStretch = lowBeatStretch * 2; // one octave higher
@@ -56,7 +58,8 @@ let hpf = cutoff;
 let lpfAdd = 0;
 
 // player for starters samples
-let starterPlayer = null;
+let bassPlayer = null;
+let leadPlayer = null;
 
 // startpoints
 let bass = null;
@@ -73,6 +76,10 @@ document.querySelector('button#stop')?.addEventListener('click', async () => {
     stop();
 });
 
+document.querySelector('button#hush')?.addEventListener('click', async () => {
+    Tone.Transport.dispose();
+});
+
 document.querySelector('input#slices')?.addEventListener('input', async (event) => {
     console.log("slices:", event.target.value);
     startpoints = chop(player.buffer.duration, parseInt(event.target.value));
@@ -83,13 +90,19 @@ document.querySelector('input#seeda')?.addEventListener('input', async (event) =
     console.log("seed:", event.target.value);
     const generator = new Math.seedrandom(event.target.value);
     s1 = generator();
-    // console.log("rand:", s1);
-    player.loopStart = startpoints[Math.floor(startpoints.length * s1)];
-    player.loopEnd = player.loopStart + (player.buffer.duration / startpoints.length);
+    console.log("rand:", s1);
+    let loopStart = startpoints[Math.floor(startpoints.length * s1)];
+    let loopEnd = loopStart + (bassPlayer.buffer.duration / startpoints.length);
+    // console.log("start pts:", startpoints);
+    // console.log("chops:", chops);
+    // console.log("start:", loopStart);
+    // console.log("end:", loopEnd);
+
+    // player.loopStart = startpoints[Math.floor(startpoints.length * s1)];
+    // player.loopEnd = player.loopStart + (player.buffer.duration / startpoints.length);
     // player.loopEnd = 1;
-    console.log("start:", player.loopStart);
-    console.log("end:", player.loopEnd);
-    // sample();
+    // console.log("start:", bassPlayer.loopStart);
+    // console.log("end:", bassPlayer.loopEnd);
 });
 
 // grab sample filename from input field
@@ -105,11 +118,18 @@ function dabeat(file) {
     // console.log("dabeat:", file);
     //////////////////////////////////////////////////// TODO: change to stream loader (not file path finder)
     ////////////////////////////////////////////////////        see top of file (fabian's code)
-    starterPlayer = new Tone.Player("samples/starters/" + file.name, () => {
-        let bassChunks = chop(starterPlayer.buffer.duration, 16); // 16 slices
-        let xufle = choosen(bassChunks, 16);
-        console.log("chunks:", bassChunks);
-        play(starterPlayer, bassChunks);
+    bassPlayer = new Tone.Player("samples/starters/" + file.name, () => {
+        let chunks = chop(bassPlayer.buffer.duration, 16); // 16 slices
+        let bassA = choosen(chunks, numSlices);
+        let bassB = choosen(chunks, numSlices);
+        let leadA = choosen(chunks, numSlices);
+        let leadB = choosen(chunks, numSlices);
+        console.log("chunks:", chunks);
+        console.log("bassA:", bassA);
+        console.log("bassB:", bassB);
+        console.log("leadA:", leadA);
+        console.log("leadB:", leadB);
+        play(bassPlayer, bassA);
     }).toDestination();
 }
 
@@ -186,14 +206,13 @@ function chop(duration, slices) {
     return startpoints;
 }
 
-/// \brief  choose N the elements of a LIST prioritizing those that are closer to each other
+/// \brief  choose SIZE elements of a LIST prioritizing those that are closer to each other
 function choosen( list, size ) {
-    // const probabilites = [-2,-1,0,1,2];
     const probabilites = [-2, -1, 0, 1, 2];
     let result = new Array(size);
     let index = Math.floor(Math.random() * list.length);
 
-    console.log(index);
+    console.log("index: ", index);
     for (let i = 0; i < size; i++) {
         // console.log(index);
         result[i] = list[index];
@@ -204,11 +223,12 @@ function choosen( list, size ) {
             rnd = abs(rnd);
         }
         /////////////////////////////////////////////////////////////////// TODO: fix random (needs refresh to get a different value)
-        console.log(index, ":", rnd);
+        // console.log(index, ":", rnd);
         index = index + rnd;
         // console.log(i, ":", index, ":", result[i]);
     }
-    console.log(result);
+    // console.log(result);
+    return result
 }
 
 /// \brief  play a sequence of chunks of a sample
