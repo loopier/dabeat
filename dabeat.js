@@ -36,7 +36,15 @@ let s3 = 0;
 // chopping the sample
 let startpoints = [];
 // number of slices per part A and B
-let numSlices = 8;
+const numSlices = 8;
+// define score structures
+const ScoreStructure = {
+    AAAB: 1,
+    AAAAAABB: 2,
+};
+// define structure to be used
+const scoreStructure = ScoreStructure.AAAB;
+// const scoreStructure = ScoreStructure.AAAAAABB;
 // beat stretch proportional to sample duration
 let rate = 1;
 // pitch transposition
@@ -67,26 +75,26 @@ let alto = null;
 
 //attach a click listener to a play button
 document.querySelector('button#start')?.addEventListener('click', async () => {
-    await Tone.start()
-    console.log('audio is ready')
+    await Tone.start();
+    console.log('audio is ready');
     start();
 });
 
-document.querySelector('button#stop')?.addEventListener('click', async () => {
+document.querySelector('button#stop')?.addEventListener('click',  () => {
     stop();
 });
 
-document.querySelector('button#hush')?.addEventListener('click', async () => {
+document.querySelector('button#hush')?.addEventListener('click',  () => {
     Tone.Transport.dispose();
 });
 
-document.querySelector('input#slices')?.addEventListener('input', async (event) => {
+document.querySelector('input#slices')?.addEventListener('input',  (event) => {
     console.log("slices:", event.target.value);
     startpoints = chop(player.buffer.duration, parseInt(event.target.value));
     // sample();
 });
 
-document.querySelector('input#seeda')?.addEventListener('input', async (event) => {
+document.querySelector('input#seeda')?.addEventListener('input',  (event) => {
     console.log("seed:", event.target.value);
     const generator = new Math.seedrandom(event.target.value);
     s1 = generator();
@@ -107,7 +115,7 @@ document.querySelector('input#seeda')?.addEventListener('input', async (event) =
 
 // grab sample filename from input field
 const fileinput = document.querySelector('input#fileinput');
-fileinput.addEventListener('change', async () => {
+fileinput.addEventListener('change', () => {
     if(fileinput.files.length > 0) {
         dabeat(fileinput.files[0]);
     };
@@ -118,19 +126,42 @@ function dabeat(file) {
     // console.log("dabeat:", file);
     //////////////////////////////////////////////////// TODO: change to stream loader (not file path finder)
     ////////////////////////////////////////////////////        see top of file (fabian's code)
-    bassPlayer = new Tone.Player("samples/starters/" + file.name, () => {
+    // let audioFile = "http://localhost:8000/asound.wav";
+    // let audioFile = "http://localhost:8000/" + file.name;
+    let audioFile = "http://localhost:8000/samples/starters/" + file.name;
+    ////////////////// WARNING: the 'onload' callback function IS SHIT!!! It hides errors outputting nothing.
+    //////////////////          if you find awkward and random behaviour, chances are that there's an error
+    //////////////////          inside this function. Try it outside to solve it.
+    //////////////////          Code needs to be inside because it uses the buffer duration, which is only
+    //////////////////          available 'on load'...
+    bassPlayer = new Tone.Player(audioFile, () => {
+        console.log("onload:", bassPlayer.buffer.duration);
         let chunks = chop(bassPlayer.buffer.duration, 16); // 16 slices
         let bassA = choosen(chunks, numSlices);
         let bassB = choosen(chunks, numSlices);
         let leadA = choosen(chunks, numSlices);
         let leadB = choosen(chunks, numSlices);
+        let bassScore = createScore(scoreStructure, bassA, bassB);
+        let leadScore = createScore(scoreStructure, leadA, leadB);
         console.log("chunks:", chunks);
         console.log("bassA:", bassA);
         console.log("bassB:", bassB);
         console.log("leadA:", leadA);
         console.log("leadB:", leadB);
-        play(bassPlayer, bassA);
+        console.log("score structure:", scoreStructure);
+        console.log("bass score:", bassScore);
+        console.log("lead score:", leadScore);
+        play(bassPlayer, bassScore);
     }).toDestination();
+
+    // let alist = [0,1,2,3,4,5,6];
+    // let partA = choosen(alist, numSlices);
+    // let partB = choosen(alist, numSlices);
+    // let aaab = createScore(1, partA, partB);
+    // console.log("alist:", alist);
+    // console.log("partA:", partA);
+    // console.log("partB:", partB);
+    // console.log("AAAB:", aaab);
 }
 
 // function blip() {
@@ -212,15 +243,15 @@ function choosen( list, size ) {
     let result = new Array(size);
     let index = Math.floor(Math.random() * list.length);
 
-    console.log("index: ", index);
+    // console.log("index: ", index);
     for (let i = 0; i < size; i++) {
         // console.log(index);
         result[i] = list[index];
         let rnd = probabilites[Math.floor(Math.random() * probabilites.length)];
         if( index >= list.length ) {
-            rnd = -abs(rnd);
+            rnd = -Math.abs(rnd);
         } else if( index <= 0 ) {
-            rnd = abs(rnd);
+            rnd = Math.abs(rnd);
         }
         /////////////////////////////////////////////////////////////////// TODO: fix random (needs refresh to get a different value)
         // console.log(index, ":", rnd);
@@ -238,3 +269,18 @@ function pseq(list, repeats) {
         player.start(startpos, dur);
     });
 }
+
+/// \brief  create a score of SIZE * 3 items of PARTA, and SIZE items of PARTB
+function createScore( size, partA, partB ) {
+    let score = [];
+    for (let i = 0; i < size * 3; i++) {
+        console.log("partA #", i, ": ", partA);
+        score.push(partA);
+    }
+    for (let i = 0; i < size; i++) {
+        score.push(partB);
+    }
+    return score.flat();
+}
+
+// dabeat("asound.wav");
