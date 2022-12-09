@@ -1,68 +1,176 @@
+// global vars
+// random seeds
+let seedrand1 = 0;
+let seedrand2 = 0;
+let seedrand3 = 0;
 
+// sonic-pi filter frequency range mapping
+const sonicPiFilterMin = 0;
+const sonicPiFilterMax = 140;
+const hzMin = 20;
+const hzMax = 20000;
+
+// sequencer
+const numSteps = 8;
+// tempo
+let bpm = linlin(Math.random(), 0, 1, 86,98);
+
+// musical structure
+const ScoreStructure = {
+    AAAB: 1,
+    AAAAAABB: 2,
+};
+// define structure to be used
+const scoreStructure = ScoreStructure.AAAB;
+// number of slices per part (A and B)
+const numSlices = 8;
+
+/// Variables holding arrays with sample file names are in dedicated files for
+/// each group. This makes it easier to generate and maintain.
+let baseSamplesDirectoryUrl = "samples/";
 
 // starters
-let starterPlayer = null;
-let starterSamplePath = "samples/starters/honey-120bpm-with-shinobic.wav";
+let starterBaseUrl = baseSamplesDirectoryUrl + "starters/";
+let starterFilename = starterBaseUrl + choose(starters); // 'starters' is declared in kick-filenames.js
 let isStarterReady = false;
-// drumkit
-let kickPlayer = null;
-let kickPath = "cave-kick.wav";
-let kickPattern = [1,0,1,0,1,0,1,0];
-const kickdelays = [0.93, 0.73, 0.74, 1.7, 0.83, 0.97, 0.5, 1.6];
-let kickindex = 0;
+// bass
+let bassConfig = {
+    filename: starterFilename,
+    filter : "lowpass",
+    cutoff : linexp(80, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
+    pan : linlin(Math.random(), 0,1, -0.09, 0),
+    delays: [0],
+    startPositions: [0],
+    durs: ["8n"],
+};
+// lead
+let leadConfig = {
+    filename: starterFilename,
+    filter : "highpass",
+    cutoff : linexp(linlin(Math.random(), 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
+    pan : choose([-0.5,0.5]),
+    delays: [0],
+    startPositions: [0],
+    durs: ["8n"],
+};
 
-function setupPlayer (filepath) {
-    // console.log("starter path: ", filepath);
-    const buf = new Tone.ToneAudioBuffer(filepath, () => {
-        console.log("bufer loaded:", filepath);
+// drumkit
+// kick
+let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
+let kickConfig = {
+    filename: kickBaseUrl + choose(kicks), // 'kicks' is declared in kick-filenames.js
+    pattern : [1,0,1,0,1,0,1,0],
+    delays : [0.93, 0.73, 0.74, 1.7, 0.83, 0.97, 0.5, 1.6],
+    startPositions: [0],
+    durs: ["8n"],
+};
+
+
+function newPlayer (playerConfig) {
+    console.log("filename: ", playerConfig.filename);
+    console.log("rate:", playerConfig.rate);
+    console.log("volume:", playerConfig.volume);
+    console.log("delaytime:", playerConfig.delaytime);
+    console.log("delayfb:", playerConfig.delayfb);
+    console.log("cutoff:", playerConfig.cutoff);
+    console.log("filter:", playerConfig.filter);
+    console.log("pan:", playerConfig.pan);
+    console.log("dur:", playerConfig.dur);
+
+    const buf = new Tone.ToneAudioBuffer(playerConfig.filename, () => {
+        console.log("bufer loaded:", playerConfig.filename);
     });
 
     let player = new Tone.Player(buf, () => {
-        console.log("player ready:", filepath);
+        console.log("player ready:", playerConfig.filename);
     });
 
+    let lastModule = player;
+
+    if( playerConfig.cutoff != undefined && playerConfig.filter != undefined ) {
+        console.log(`cutoff:${playerConfig.cutoff} filter:${playerConfig.filter}`);
+        const filter = new Tone.OnePoleFilter(playerConfig.cutoff, playerConfig.filter);
+        lastModule.connect(filter);
+        lastModule = filter;
+    }
+
+    if( playerConfig.pan != undefined ) {
+        console.log(`pan:${playerConfig.pan}`);
+        const panner = new Tone.Panner(playerConfig.pan);
+        lastModule.connect(panner);
+        lastModule = panner;
+    }
+
+    if( playerConfig.delaytime != undefined && playerConfig.delayfb != undefined ) {
+        console.log(`delaytime:${playerConfig.delaytime} delayfb:${playerConfig.delayfb}`);
+        const delay = new Tone.FeedbackDelay(playerConfig.delaytime, playerConfig.delayfb);
+        lastModule.connect(delay);
+        lastModule = delay;
+    }
+
+    lastModule.toDestination();
     // player.toDestination();
+    console.log(`last module: ${lastModule}`);
+    console.log("---");
 
     return player;
 }
 
-function loop () {
+function loop (players) {
+    let step = 0;
     const loop = new Tone.Loop((time) => {
         // triggered every eighth note.
         // console.log(time);
 
-        // starter
-        if( starterPlayer.loaded == false
-          || kickPlayer.loaded == false) {
-            console.log("waiting for players to be ready...");
-            return;
-        }
-        starterPlayer.start(time + 0.00, kickdelays[kickindex], "16n");
-        // starterSamplePLayer.start(time + 0.25, 1, "8n");
+        for(let i = 0; i < players.length; i++) {
+            const obj = players[i];
+            const player = obj.player;
+            const delay = obj.delays[ step % obj.delays.length ];
+            const start = obj.startPositions[ step % obj.startPositions.length ];
+            const dur = obj.durs[ step % obj.durs.length ];
+            player.start(time + delay, start, dur);
 
-
-        // drums
-        if( kickPattern[kickindex] ) {
-            kickPlayer.start(time + kickdelays[kickindex], 0, "8n");
+            console.log(`${i} player:${players[i].filename} delay:${delay} start:${start} dur:${dur}`);
+            // console.log(`${i} player:${player}`);
         }
 
-        kickindex = (kickindex + 1) % kickdelays.length;
-        // console.log(`${kickindex}:${kickdelays[kickindex]}`);
+        // // starter
+        // if( bassPlayer.loaded == false
+        //   || kickPlayer.loaded == false) {
+        //     console.log("waiting for players to be ready...");
+        //     return;
+        // }
+        // bassPlayer.start(time + 0.00, kickConfig.delays[step], "8n");
+        // // starterSamplePLayer.start(time + 0.25, 1, "8n");
+
+
+        // // drums
+        // if( kickPattern[step] ) {
+        //     kickPlayer.start(time + kickConfig.delays[step], 0, "8n");
+        // }
+
+        step = (step + 1) % numSteps;
+        // console.log(`${step}:${kickConfig.delays[step]}`);
     }, "8n").start();
 
     Tone.Transport.start();
 }
 
+/// \brief  play the thing.
+///
+/// This is the main object playing the samples with their assigned delays.
 function play() {
-    starterPlayer = setupPlayer(starterSamplePath);
-    kickPlayer = setupPlayer("samples/ab-kicks/"+kickPath);
+    // prevent overdub
+    stop();
 
-    starterPlayer
-        .connect((new Tone.Panner(-1))
-                 .connect((new Tone.OnePoleFilter(15000, "highpass")).toDestination()));
-    kickPlayer
-        .connect((new Tone.Panner(1))
-                 .connect((new Tone.OnePoleFilter(50, "lowpass")).toDestination()));
+    bassConfig.player = newPlayer(bassConfig);
+    leadConfig.player = newPlayer(leadConfig);
+    kickConfig.player = newPlayer(kickConfig);
 
-    loop();
+    loop([bassConfig, leadConfig, kickConfig]);
 }
+
+function stop() {
+    Tone.Transport.stop();
+}
+

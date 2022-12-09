@@ -214,24 +214,6 @@ function dabeat(file) {
 
 }
 
-
-
-// function blip() {
-//     console.log("alo blip")
-
-//     const synth = new Tone.Synth().toDestination();
-//     synth.triggerAttackRelease("C4", "8n");
-// }
-
-// function loop() {
-//     const osc = new Tone.Oscillator().toDestination();
-//     Tone.Transport.scheduleRepeat((time) => {
-//         osc.start(time).stop(time + 0.1);
-//     }, "8n", 0, 4);
-
-//     Tone.Transport.start();
-// }
-
 function start() {
     Tone.Transport.start();
     bassPlayer.start();
