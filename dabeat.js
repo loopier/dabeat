@@ -2,7 +2,7 @@
 // 1. load a sample
 // 2. chop twice in 8 or 16 chunks
 // 3. choose chunks favouring those that are closer to each other, determined with
-//  's1': one for high-pitch, one for low-pitch
+//  'seedrand1': one for high-pitch, one for low-pitch
 // 4. use step #3 to create structure: A=3+1||6+2, B=3+1||6+2
 //    setp #3 must be used 4 times: 2 times for A (3+1), 2 times for B (3+1) so we
 //    end up with 4 different sets of chunks
@@ -35,11 +35,16 @@ const ScoreStructure = {
     AAAAAABB: 2,
 };
 
+//
+let samplesPath = "http://localhost:8000/samples/starters-renamed/";
 
 // random seeds
-let s1 = 0;
-let s2 = 0;
-let s3 = 0;
+let seedrand1 = 0;
+let seedrand2 = 0;
+let seedrand3 = 0;
+
+// tempo
+let bpm = linlin(Math.random(), 0, 1, 86,98);
 // chopping the sample
 let startpoints = [];
 // number of slices per part A and B
@@ -75,7 +80,7 @@ let leadPlayer = null;
 const lead = {};
 lead.isPlaying = false,
 lead.rate = 2.0;
-lead.amp = 0.7;
+lead.amp = 0.7 / 2;
 lead.delay = Math.random(0.02, 0.07);
 lead.pan = [-0.5, 0.5][Math.floor(Math.random() * 2)]; // 2 is array length
 lead.sliceDur = Math.random(0.6,0.8);
@@ -83,7 +88,7 @@ lead.cutoff = linexp(Math.random(80,90), 0, 140, 20, 20000);
 
 const bass = {};
 bass.rate = 1.0;
-bass.amp = 1.2;
+bass.amp = 1.2 / 2;
 bass.delay = Math.random(0.06, 0.12);
 bass.pan = Math.random(-0.09, 0);
 bass.sliceDur = Math.random(0.6,0.8);
@@ -109,23 +114,24 @@ document.querySelector('input#slices')?.addEventListener('input',  (event) => {
     // sample();
 });
 
-document.querySelector('input#seeda')?.addEventListener('input',  (event) => {
-    console.log("seed:", event.target.value);
-    const generator = new Math.seedrandom(event.target.value);
-    s1 = generator();
-    console.log("rand:", s1);
-    let loopStart = startpoints[Math.floor(startpoints.length * s1)];
-    let loopEnd = loopStart + (bassPlayer.buffer.duration / startpoints.length);
-    // console.log("start pts:", startpoints);
-    // console.log("chops:", chops);
-    // console.log("start:", loopStart);
-    // console.log("end:", loopEnd);
+document.querySelector('input#seed1')?.addEventListener('input',  (event) => {
+    let value = event.target.value;
+    seedrand1 = seedrand(value);
+});
 
-    // player.loopStart = startpoints[Math.floor(startpoints.length * s1)];
-    // player.loopEnd = player.loopStart + (player.buffer.duration / startpoints.length);
-    // player.loopEnd = 1;
-    // console.log("start:", bassPlayer.loopStart);
-    // console.log("end:", bassPlayer.loopEnd);
+document.querySelector('input#seed2')?.addEventListener('input',  (event) => {
+    let value = event.target.value;
+    seedrands = seedrand(value);
+});
+
+document.querySelector('input#seed3')?.addEventListener('input',  (event) => {
+    let value = event.target.value;
+    seedrand3 = seedrand(value);
+});
+
+document.querySelector('input#leadon')?.addEventListener('input',  (event) => {
+    let value = event.target.checked;
+    lead.isPlaying = value;
 });
 
 // grab sample filename from input field
@@ -143,42 +149,72 @@ function dabeat(file) {
     ////////////////////////////////////////////////////        see top of file (fabian's code)
     // let audioFile = "http://localhost:8000/asound.wav";
     // let audioFile = "http://localhost:8000/" + file.name;
-    let audioFile = "http://localhost:8000/samples/starters/" + file.name;
+    let audioFile = samplesPath + file.name;
     ////////////////// WARNING: the 'onload' callback function IS SHIT!!! It hides errors outputting nothing.
     //////////////////          if you find awkward and random behaviour, chances are that there's an error
     //////////////////          inside this function. Try it outside to solve it.
     //////////////////          Code needs to be inside because it uses the buffer duration, which is only
     //////////////////          available 'on load'...
     //////////////////          I haven't found a way to make it work elsewhere.
-    const bassDelay = new Tone.Delay(bass.delay);
-    const bassPan = new Tone.Panner(bass.pan);
+
+    Tone.Transport.bpm.value = bpm;
+    console.log("bpm:", Tone.Transport.bpm.value);
+
+    ///////////////////////////////////////////////////////// TODO: move to abstraction (same for bass and lead)
     bassPlayer = new Tone.Player(audioFile, () => {
-        console.log("onload:", bassPlayer.buffer.duration);
-        let chunks = chop(bassPlayer.buffer.duration, 16); // 16 slices
+        let sampleDur = bassPlayer.buffer.duration;
+        let chunks = chop(sampleDur, 16); // 16 slices
         let bassA = choosen(chunks, numSlices);
         let bassB = choosen(chunks, numSlices);
         let bassScore = createScore(scoreStructure, bassA, bassB);
+
+        let ratio = sampleStretchRatio( sampleDur, bpm );
+        let index = [0,1][lead.isPlaying ? 0 : 1];
+        bass.amp = [bass.amp, linlin(bass.amp + lead.amp, 0,2, 0,1)][index];
+        bass.rate = bass.rate * ratio;
+        bass.cutoff = [bass.cutoff, bass.soloCutoff][index];
+
+        console.log("bass new rate: ", bass.rate);
         console.log("chunks:", chunks);
         console.log("bassA:", bassA);
         console.log("bassB:", bassB);
         console.log("score structure:", scoreStructure);
         console.log("bass score:", bassScore);
         play(bassPlayer, bassScore, bass);
-    }).connect(bassDelay).connect(bassPan).toDestination();
+    })
+        .connect((new Tone.Delay(bass.delay)).toDestination())
+        .connect((new Tone.Panner(bass.pan)).toDestination())
+        .connect((new Tone.OnePoleFilter(bass.cutoff, "lowpass")).toDestination())
+        .toDestination();
 
-    const leadDelay = new Tone.Delay(lead.delay);
-    const leadPan = new Tone.Panner(lead.pan);
+    if (lead.isPlaying == false) {
+        return;
+    }
+
     leadPlayer = new Tone.Player(audioFile, () => {
-        let chunks = chop(leadPlayer.buffer.duration, 16); // 16 slices
+        let sampleDur = leadPlayer.buffer.duration;
+        let chunks = chop(sampleDur, 16); // 16 slices
         let leadA = choosen(chunks, numSlices);
         let leadB = choosen(chunks, numSlices);
         let leadScore = createScore(scoreStructure, leadA, leadB);
+
+        let ratio = sampleStretchRatio( sampleDur, bpm );
+        lead.rate = lead.rate * ratio;
+
+        console.log("lead new rate: ", lead.rate);
         console.log("leadA:", leadA);
         console.log("leadB:", leadB);
         console.log("lead score:", leadScore);
         play(leadPlayer, leadScore, lead);
-    }).connect(leadDelay).connect(leadPan).toDestination();
+    })
+        .connect((new Tone.Delay(lead.delay)).toDestination())
+        .connect((new Tone.Panner(lead.pan)).toDestination())
+        .connect((new Tone.OnePoleFilter(lead.cutoff, "highpass")).toDestination())
+        .toDestination();
+
 }
+
+
 
 // function blip() {
 //     console.log("alo blip")
@@ -255,7 +291,6 @@ function play(player, seq, obj) {
         // console.log("dur:", obj.sliceDur);
     }, "8n").start();
 
-    console.log("bpm:", Tone.Transport.bpm);
     Tone.Transport.start();
 }
 
@@ -323,4 +358,26 @@ function linexp(value, inmin, inmax, outmin, outmax) {
     return Math.pow(outmax / outmin, (value - inmin) / (inmax - inmin)) * outmin;
 }
 
-// dabeat("asound.wav");
+/// \brief  returns a random number based on seed
+/// wrote it to simplify syntax
+function seedrand(seed) {
+    const generator = new Math.seedrandom(seed);
+    let rand = generator();
+    console.log(`seed:${seed} rand:${rand}`);
+    return rand;
+}
+
+/// \brief  scales sample dur to match bpm (assuming it is a
+///         multiple of 4 bars)
+function sampleStretchRatio( inSampleDur, inBpm ) {
+    let sampleBeats = inSampleDur / 60 * inBpm;
+    let sampleBars = sampleBeats / 4;
+    let sampleBarsRounded = Math.round(sampleBars);
+    let ratio = 1 / (sampleBars / Math.max(1, sampleBarsRounded));
+    console.log(`sample dur: ${inSampleDur}`);
+    console.log(`sample beats: ${sampleBeats}`);
+    console.log(`sample bars: ${sampleBars}`);
+    console.log(`sample bars rounded: ${sampleBarsRounded}`);
+    console.log(`sample stretch ratio: ${ratio}`);
+    return ratio;
+}
