@@ -149,7 +149,7 @@ Tots els tracks tenen efectes, però determinarem els seus paràmetres un cop es
 - qui forma les seqüències de bateria? són predeterminades o hi ha grooves predeterminats i surten d'allà?
 - els temps de delay són en segons o beats? --> EN BEATS
 - els cutoffs són sobre 140. No sabem la unitat, però 140 equival a 10 kHz, 15 kHz o 20 kHz?
-**- no entenem lo de la durada dels chops. Què determina: Quant dura un sol chop? Quant duren cadascun dels chops (tots el mateix valor)? què pasa si la durada és inferior al beat? i si és superior?**. EN PRINCIPI EL PATCH DEL PAU CH
+**- no entenem lo de la durada dels chops. Què determina: Quant dura un sol chop? Quant duren cadascun dels chops (tots el mateix valor)? què pasa si la durada és inferior al beat? i si és superior?**. 
 - pels efectes, caldria una llista dels que necessites, en quin ordre i per quin "track" o instrument. També cal tenir una llista dels paràmetres que vols poder manipular a cadascun dels efectes. Això ho farem un cop tinguem el sistema muntat perquè no tenen perquè ser els mateixos valors que a Sonic-Pi. Et podem deixar una guia de com tunejar-los. Si és el que vols, si et plau especifíca-ho a la secció **FX**.
 - caldria detallar què passa amb les veus.
 - especifica què vols poder tunejar un cop t'entreguem el codi. I quina documentació necessites.
