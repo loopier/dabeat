@@ -60,17 +60,17 @@ let leadConfig = {
 
 // drumkit
 const drumkitDelay = linlin(Math.random(), 0,1, 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
+const drumkitVolume = 1.1;
 // kick
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickConfig = {
     name: "kick",
     filename: kickBaseUrl + choose(kicks), // 'kicks' is declared in kick-filenames.js
     pattern : [1,0,1,0,1,0,1,0],
-    // delays : addDrumkitDelay([0.93, 0.73, 0.74, 1.7, 0.83, 0.97, 0.5, 1.6], drumkitDelay),
     delays : [0.93, 0.73, 0.74, 1.7, 0.83, 0.97, 0.5, 1.6].map(x => x * drumkitDelay),
     startPositions: [0],
     durs: ["8n"],
-    volume: 1,
+    volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
 
 function newPlayer (playerConfig) {
@@ -123,48 +123,43 @@ function newPlayer (playerConfig) {
     return player;
 }
 
-function loop (players) {
+function loop (config) {
     let step = 0;
+    console.log("looping:", config.name);
+    console.log("player", config.player);
     const loop = new Tone.Loop((time) => {
         // triggered every eighth note.
         // console.log(time);
 
-        for(let i = 0; i < players.length; i++) {
-            const obj = players[i];
-            const name = obj.name;
-            const player = obj.player;
-            const delay = obj.delays[ step % obj.delays.length ] * Tone.Time("8n");
-            // const delay = linlin(obj.delays[ step % obj.delays.length ], 0, 1, 0, Tone.Time("8n").toSeconds());
-            const start = obj.startPositions[ step % obj.startPositions.length ];
-            const dur = obj.durs[ step % obj.durs.length ];
-            player.start(time + delay, start, dur);
-            player.volume.value = obj.volume;
+        const name = config.name;
+        const player = config.player;
+        // const delay = config.delays[ step % config.delays.length ] * Tone.Time("8n");
+        const delay = linlin(config.delays[ step % config.delays.length ], 0, 1, 0, Tone.Time("8n").toSeconds());
+        const start = config.startPositions[ step % config.startPositions.length ];
+        const dur = config.durs[ step % config.durs.length ];
+        const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, 0);
+        const gate = config.pattern ? config.pattern[step % config.pattern] : 1;
+        player.volume.value = volume;
+        player.start(time + delay, start, dur);
+        // player.volume.value = config.volume * config.pattern[step];
 
-            console.log(`${i}:${name} player:${players[i].filename} delay:${delay} start:${start} dur:${dur} vol:${obj.volume}`);
-            // console.log(`${i}:${name} obj.delay:${obj.delays[ step % obj.delays.length ]} delay:${delay}`);
-            // console.log(`${i} player:${player}`);
-        }
+        // console.log(`${step}:${name} player:${config.filename} delay:${delay} start:${start} dur:${dur} vol:${config.volume}`);
+        // console.log(`${i}:${name} config.delay:${config.delays[ step % config.delays.length ]} delay:${delay}`);
+        // console.log(`${i} player:${player}`);
 
-        // // starter
-        // if( bassPlayer.loaded == false
-        //   || kickPlayer.loaded == false) {
-        //     console.log("waiting for players to be ready...");
-        //     return;
-        // }
-        // bassPlayer.start(time + 0.00, kickConfig.delays[step], "8n");
-        // // starterSamplePLayer.start(time + 0.25, 1, "8n");
-
-
-        // // drums
-        // if( kickPattern[step] ) {
-        //     kickPlayer.start(time + kickConfig.delays[step], 0, "8n");
-        // }
+        console.log("name: ", name);
+        console.log("player: ", config.filename);
+        console.log("delay: ", delay);
+        console.log("start: ", start);
+        console.log("dur: ", dur);
+        console.log("volume:", config.volume, " gain: ", volume);
+        console.log("gate: ", gate);
+        console.log("---");
 
         step = (step + 1) % numSteps;
-        // console.log(`${step}:${kickConfig.delays[step]}`);
     }, Tone.Time("8n").toSeconds()).start();
 
-    Tone.Transport.start();
+    return stop;
 }
 
 /// \brief  play the thing.
@@ -178,7 +173,15 @@ function play() {
     leadConfig.player = newPlayer(leadConfig);
     kickConfig.player = newPlayer(kickConfig);
 
-    loop([bassConfig, leadConfig, kickConfig]);
+    const band = [bassConfig, leadConfig, kickConfig];
+    for( i = 0; i < band.length; i++ ) {
+        // console.log(i, ":", band[i].pattern);
+        loop(band[i]);
+    }
+
+    // loop(bassConfig);
+
+    Tone.Transport.start();
 }
 
 function stop() {
