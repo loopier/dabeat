@@ -11,7 +11,8 @@ const hzMin = 20;
 const hzMax = 20000;
 
 // sequencer
-const numSteps = 8;
+const Sequencer = { numSteps: 8 }
+const rest = 0;
 // tempo
 let bpm = linlin(Math.random(), 0, 1, 86,98);
 
@@ -137,10 +138,12 @@ function loop (config) {
         const delay = linlin(config.delays[ step % config.delays.length ], 0, 1, 0, Tone.Time("8n").toSeconds());
         const start = config.startPositions[ step % config.startPositions.length ];
         const dur = config.durs[ step % config.durs.length ];
-        const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, 0);
-        const gate = config.pattern ? config.pattern[step % config.pattern] : 1;
-        player.volume.value = volume;
-        player.start(time + delay, start, dur);
+        const gate = config.pattern ? config.pattern[step % config.pattern.length] : 1;
+        const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
+        if( gate == rest ) {
+            player.volume.value = linlin(volume, -1, 1, -15, 15);
+            player.start(time + delay, start, dur);
+        }
         // player.volume.value = config.volume * config.pattern[step];
 
         // console.log(`${step}:${name} player:${config.filename} delay:${delay} start:${start} dur:${dur} vol:${config.volume}`);
@@ -152,11 +155,11 @@ function loop (config) {
         console.log("delay: ", delay);
         console.log("start: ", start);
         console.log("dur: ", dur);
-        console.log("volume:", config.volume, " gain: ", volume);
+        console.log("volume:", config.volume, " gain: ", player.volume.value);
         console.log("gate: ", gate);
         console.log("---");
 
-        step = (step + 1) % numSteps;
+        step = (step + 1) % Sequencer.numSteps;
     }, Tone.Time("8n").toSeconds()).start();
 
     return stop;
@@ -174,8 +177,9 @@ function play() {
     kickConfig.player = newPlayer(kickConfig);
 
     const band = [bassConfig, leadConfig, kickConfig];
+    // const band = [kickConfig];
     for( i = 0; i < band.length; i++ ) {
-        // console.log(i, ":", band[i].pattern);
+        console.log(i, ":", band[i].pattern);
         loop(band[i]);
     }
 
