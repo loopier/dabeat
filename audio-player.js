@@ -1,8 +1,8 @@
 // global vars
 // random seeds
-let seedrand1 = 0;
-let seedrand2 = 0;
-let seedrand3 = 0;
+let randseed1 = 0;
+let randseed2 = 0;
+let randseed3 = 0;
 
 // sonic-pi filter frequency range mapping
 const sonicPiFilterMin = 0;
@@ -35,6 +35,7 @@ let starterFilename = starterBaseUrl + choose(starters); // 'starters' is declar
 let isStarterReady = false;
 // bass
 let bassConfig = {
+    name: "bass",
     filename: starterFilename,
     filter : "lowpass",
     cutoff : linexp(80, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
@@ -42,9 +43,11 @@ let bassConfig = {
     delays: [0],
     startPositions: [0],
     durs: ["8n"],
+    volume: 1,
 };
 // lead
 let leadConfig = {
+    name: "lead",
     filename: starterFilename,
     filter : "highpass",
     cutoff : linexp(linlin(Math.random(), 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
@@ -52,19 +55,23 @@ let leadConfig = {
     delays: [0],
     startPositions: [0],
     durs: ["8n"],
+    volume: 1,
 };
 
 // drumkit
+const drumkitDelay = linlin(Math.random(), 0,1, 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
 // kick
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickConfig = {
+    name: "kick",
     filename: kickBaseUrl + choose(kicks), // 'kicks' is declared in kick-filenames.js
     pattern : [1,0,1,0,1,0,1,0],
-    delays : [0.93, 0.73, 0.74, 1.7, 0.83, 0.97, 0.5, 1.6],
+    // delays : addDrumkitDelay([0.93, 0.73, 0.74, 1.7, 0.83, 0.97, 0.5, 1.6], drumkitDelay),
+    delays : [0.93, 0.73, 0.74, 1.7, 0.83, 0.97, 0.5, 1.6].map(x => x * drumkitDelay),
     startPositions: [0],
     durs: ["8n"],
+    volume: 1,
 };
-
 
 function newPlayer (playerConfig) {
     console.log("filename: ", playerConfig.filename);
@@ -124,13 +131,17 @@ function loop (players) {
 
         for(let i = 0; i < players.length; i++) {
             const obj = players[i];
+            const name = obj.name;
             const player = obj.player;
-            const delay = obj.delays[ step % obj.delays.length ];
+            const delay = obj.delays[ step % obj.delays.length ] * Tone.Time("8n");
+            // const delay = linlin(obj.delays[ step % obj.delays.length ], 0, 1, 0, Tone.Time("8n").toSeconds());
             const start = obj.startPositions[ step % obj.startPositions.length ];
             const dur = obj.durs[ step % obj.durs.length ];
             player.start(time + delay, start, dur);
+            player.volume.value = obj.volume;
 
-            console.log(`${i} player:${players[i].filename} delay:${delay} start:${start} dur:${dur}`);
+            console.log(`${i}:${name} player:${players[i].filename} delay:${delay} start:${start} dur:${dur} vol:${obj.volume}`);
+            // console.log(`${i}:${name} obj.delay:${obj.delays[ step % obj.delays.length ]} delay:${delay}`);
             // console.log(`${i} player:${player}`);
         }
 
@@ -151,7 +162,7 @@ function loop (players) {
 
         step = (step + 1) % numSteps;
         // console.log(`${step}:${kickConfig.delays[step]}`);
-    }, "8n").start();
+    }, Tone.Time("8n").toSeconds()).start();
 
     Tone.Transport.start();
 }
