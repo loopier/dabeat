@@ -11,7 +11,8 @@ const hzMin = 20;
 const hzMax = 20000;
 
 // sequencer
-const Sequencer = { numSteps: 8 }
+const Sequencer = { numSteps: 8, beatDur: Tone.Time("8n").toSeconds() };
+console.debug("sequencer:", Sequencer);
 const rest = 0;
 // tempo
 let bpm = linlin(Math.random(), 0, 1, 86,98);
@@ -43,7 +44,7 @@ let bassConfig = {
     pan : linlin(Math.random(), 0,1, -0.09, 0),
     delays: [0],
     startPositions: [0],
-    durs: ["8n"],
+    durs: [1],
     volume: 1,
 };
 // lead
@@ -55,22 +56,43 @@ let leadConfig = {
     pan : choose([-0.5,0.5]),
     delays: [0],
     startPositions: [0],
-    durs: ["8n"],
+    durs: [1],
     volume: 1,
 };
 
 // drumkit
-const drumkitDelay = linlin(Math.random(), 0,1, 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
+const drumkitDelay = 0;//linlin(Math.random(), 0,1, 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
 const drumkitVolume = 1.1;
 // kick
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickConfig = {
     name: "kick",
     filename: kickBaseUrl + choose(kicks), // 'kicks' is declared in kick-filenames.js
-    pattern : [1,0,1,0,1,0,1,0],
-    delays : [0.93, 0.73, 0.74, 1.7, 0.83, 0.97, 0.5, 1.6].map(x => x * drumkitDelay),
+    pattern : [1,0,0,0,1,0,0,0],
+    // delays : [0.01, 0, 0.03, 0, 0.16, 0, 0.18, 0].map(x => x * drumkitDelay),
+    delays : [1].map(x => x * drumkitDelay),
     startPositions: [0],
-    durs: ["8n"],
+    durs: [1],
+    volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
+};
+let snareBaseUrl = baseSamplesDirectoryUrl + "ab-snares-snaps-claps/";
+let snareConfig = {
+    name: "snare",
+    filename: snareBaseUrl + choose(snares), // 'kicks' is declared in kick-filenames.js
+    pattern : [0,1],
+    delays : [1].map(x => x * drumkitDelay),
+    startPositions: [0],
+    durs: [1],
+    volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
+};
+let hihatBaseUrl = baseSamplesDirectoryUrl + "ab-hats/";
+let hihatConfig = {
+    name: "hihat",
+    filename: hihatBaseUrl + choose(hats), // 'kicks' is declared in kick-filenames.js
+    pattern : [1,1,1,1,1,1,1,1],
+    delays : [1].map(x => x * drumkitDelay),
+    startPositions: [0],
+    durs: [1],
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
 
@@ -126,43 +148,100 @@ function newPlayer (playerConfig) {
 
 function loop (config) {
     let step = 0;
-    console.log("looping:", config.name);
+    // default time to next sequencer event
+    console.log("sequencing:", config.name);
     console.log("player", config.player);
+
+    let delay = 0;
+    let accumulatedTime = 0;
+    let loopInterval = Sequencer.beatDur;
     const loop = new Tone.Loop((time) => {
         // triggered every eighth note.
         // console.log(time);
 
-        const name = config.name;
-        const player = config.player;
-        // const delay = config.delays[ step % config.delays.length ] * Tone.Time("8n");
-        const delay = linlin(config.delays[ step % config.delays.length ], 0, 1, 0, Tone.Time("8n").toSeconds());
-        const start = config.startPositions[ step % config.startPositions.length ];
-        const dur = config.durs[ step % config.durs.length ];
         const gate = config.pattern ? config.pattern[step % config.pattern.length] : 1;
-        const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
-        if( gate == rest ) {
+        if( gate != rest ) {
+            const name = config.name;
+            const player = config.player;
+            // const delay = config.delays[ step % config.delays.length ] * Tone.Time("8n");
+            // subtracting the previous delay from the previous step
+            loopInterval = loopInterval - delay;
+            delay = Sequencer.beatDur * config.delays[ step % config.delays.length ];
+            loopInterval = (Sequencer.beatDur * config.durs[ step % config.durs.length ]) + delay;
+            const dur = loopInterval;
+            const start = config.startPositions[ step % config.startPositions.length ];
+            const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
             player.volume.value = linlin(volume, -1, 1, -15, 15);
-            player.start(time + delay, start, dur);
+            player.start(0, start, dur);
+        } else {
+            loopInterval = Sequencer.beatDur;
         }
-        // player.volume.value = config.volume * config.pattern[step];
+        step = (step + 1) % Sequencer.numSteps;
 
         // console.log(`${step}:${name} player:${config.filename} delay:${delay} start:${start} dur:${dur} vol:${config.volume}`);
         // console.log(`${i}:${name} config.delay:${config.delays[ step % config.delays.length ]} delay:${delay}`);
         // console.log(`${i} player:${player}`);
 
-        console.log("name: ", name);
-        console.log("player: ", config.filename);
-        console.log("delay: ", delay);
-        console.log("start: ", start);
-        console.log("dur: ", dur);
-        console.log("volume:", config.volume, " gain: ", player.volume.value);
-        console.log("gate: ", gate);
-        console.log("---");
+        accumulatedTime += loopInterval;
+        let modulo = accumulatedTime % Sequencer.numbteps;
+        if( step == 7 ){
+            console.debug("accumulated time:", accumulatedTime);
+            console.debug("modulo:", modulo);
+            accumulatedTime = 0;
+        }
+        console.debug('%d:%s interval: %f', step, config.name, loopInterval)
+        // console.debug("time:       ", time)
+        // console.debug("time delta: ", time - oldtime);
+        // console.debug("name: ", name);
+        // console.debug("player: ", config.filename);
+        // console.debug("delay: ", delay);
+        // console.debug("dur: ", dur);
+        // console.debug("start: ", start);
+        // console.debug("dur: ", dur);
+        // console.debug("volume:", config.volume, " gain: ", player.volume.value);
+        // console.debug("gate: ", gate);
+        console.debug("---");
 
+    }, "8n").start();
+
+    return;
+}
+
+function loopAll(configs) {
+    let step = 0;
+    const loop = new Tone.Loop((time) => {
+        for( let i = 0; i < configs.length; i++ ) {
+            const config = configs[i];
+            const gate = config.pattern[ step % config.pattern.length ];
+            if( gate != rest ) {
+                const player = config.player;
+                player.start(0,0,loop.interval);
+            }
+
+            console.debug(config.name);
+        }
         step = (step + 1) % Sequencer.numSteps;
-    }, Tone.Time("8n").toSeconds()).start();
+    }, "8n").start();
+}
 
-    return stop;
+function partAll(configs) {
+    let step = 0;
+    const part = new Tone.Part((time, value) => {
+        for( let i = 0; i < configs.length; i++ ) {
+            const config = configs[i];
+            const gate = config.pattern[ step % config.pattern.length ];
+            if( gate != rest ) {
+                const player = config.player;
+                player.start(0,0,loop.interval);
+            }
+
+            console.debug(config.name);
+        }
+        step = (step + 1) % Sequencer.numSteps;
+    }, ["1n", 0]).start();
+
+    part.loop = true;
+    part.playbackRate = 4;
 }
 
 /// \brief  play the thing.
@@ -175,13 +254,18 @@ function play() {
     bassConfig.player = newPlayer(bassConfig);
     leadConfig.player = newPlayer(leadConfig);
     kickConfig.player = newPlayer(kickConfig);
+    snareConfig.player = newPlayer(snareConfig);
+    hihatConfig.player = newPlayer(hihatConfig);
 
-    const band = [bassConfig, leadConfig, kickConfig];
-    // const band = [kickConfig];
-    for( i = 0; i < band.length; i++ ) {
-        console.log(i, ":", band[i].pattern);
-        loop(band[i]);
-    }
+    // const band = [bassConfig, leadConfig, kickConfig, snareConfig, hihatConfig]; // full
+    // const band = [kickConfig, snareConfig, hihatConfig]; // drumkit
+    const band = [kickConfig, snareConfig, hihatConfig]; // kick
+    // for( i = 0; i < band.length; i++ ) {
+    //     // console.log("%d: %o", i, band[i].pattern);
+    //     loop(band[i]);
+    // }
+    // loopAll(band);
+    partAll(band);
 
     // loop(bassConfig);
 
@@ -189,6 +273,7 @@ function play() {
 }
 
 function stop() {
+    if( Tone.Transport.state != "started") return;
     Tone.Transport.stop();
 }
 
