@@ -169,7 +169,8 @@ function loop (config) {
             loopInterval = loopInterval - delay;
             delay = Sequencer.beatDur * config.delays[ step % config.delays.length ];
             loopInterval = (Sequencer.beatDur * config.durs[ step % config.durs.length ]) + delay;
-            const dur = loopInterval;
+            // const dur = loopInterval;
+            const dur = "8n";
             const start = config.startPositions[ step % config.startPositions.length ];
             const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
             player.volume.value = linlin(volume, -1, 1, -15, 15);
@@ -203,54 +204,9 @@ function loop (config) {
         // console.debug("gate: ", gate);
         console.debug("---");
 
-    }, "8n").start();
+    }, loopInterval).start();
 
     return;
-}
-
-function loopAll(configs) {
-    let step = 0;
-    const synth = new Tone.Synth().toDestination();
-    const loop = new Tone.Loop((time) => {
-            // synth.triggerAttackRelease("C3", "8n", time);
-            for( let i = 0; i < configs.length; i++ ) {
-                const config = configs[i];
-                const gate = config.pattern[ step % config.pattern.length ];
-                if( gate != rest ) {
-                    const player = config.player;
-                    // player.start(0);
-                    player.sync().start(time).stop(0.3);
-                    // synth.triggerAttackRelease("C3", "8n", time);
-                }
-
-                // console.debug(config.name);
-            }
-
-            step = (step + 1) % Sequencer.numSteps;
-            // console.log("%f", time % loop.interval);
-    }, "8n").start(0);
-}
-
-function partAll(configs) {
-    let step = 0;
-    const synth = new Tone.Synth().toDestination();
-    const part = new Tone.Part((time, value) => {
-        synth.triggerAttackRelease("C3", "8n", time);
-        // for( let i = 0; i < configs.length; i++ ) {
-        //     const config = configs[i];
-        //     const gate = config.pattern[ step % config.pattern.length ];
-        //     if( gate != rest ) {
-        //         const player = config.player;
-        //         player.start(0,0,loop.interval);
-        //     }
-
-        //     console.debug(config.name);
-        // }
-        // step = (step + 1) % Sequencer.numSteps;
-    }, ["1n", 0]).start(0);
-
-    part.loop = true;
-    part.playbackRate = 4;
 }
 
 /// \brief  play the thing.
@@ -260,6 +216,8 @@ function play() {
     // prevent overdub
     stop();
 
+
+
     bassConfig.player = newPlayer(bassConfig);
     leadConfig.player = newPlayer(leadConfig);
     kickConfig.player = newPlayer(kickConfig);
@@ -268,21 +226,12 @@ function play() {
 
     const band = [bassConfig, leadConfig, kickConfig, snareConfig, hihatConfig]; // full
     // const band = [kickConfig, snareConfig, hihatConfig]; // drumkit
-    // const band = [kickConfig, snareConfig, hihatConfig]; // kick
     for( i = 0; i < band.length; i++ ) {
         // console.log("%d: %o", i, band[i].pattern);
         loop(band[i]);
     }
 
-    // loopAll(band);
-
-    // loop(bassConfig);
-
-    // kickConfig.player.sync().start(0).stop(0.3);
-
     Tone.Transport.start();
-    // Tone.Transport.loop = true;
-    // Tone.Transport.loopEnd = 1;
 }
 
 function stop() {
