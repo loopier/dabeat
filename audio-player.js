@@ -115,6 +115,7 @@ function newPlayer (playerConfig) {
         console.log("player ready:", playerConfig.filename);
     });
 
+
     let lastModule = player;
 
     if( playerConfig.cutoff != undefined && playerConfig.filter != undefined ) {
@@ -172,7 +173,7 @@ function loop (config) {
             const start = config.startPositions[ step % config.startPositions.length ];
             const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
             player.volume.value = linlin(volume, -1, 1, -15, 15);
-            player.start(0, start, dur);
+            player.start(time, start, dur);
         } else {
             loopInterval = Sequencer.beatDur;
         }
@@ -209,36 +210,44 @@ function loop (config) {
 
 function loopAll(configs) {
     let step = 0;
+    const synth = new Tone.Synth().toDestination();
     const loop = new Tone.Loop((time) => {
-        for( let i = 0; i < configs.length; i++ ) {
-            const config = configs[i];
-            const gate = config.pattern[ step % config.pattern.length ];
-            if( gate != rest ) {
-                const player = config.player;
-                player.start(0,0,loop.interval);
+            // synth.triggerAttackRelease("C3", "8n", time);
+            for( let i = 0; i < configs.length; i++ ) {
+                const config = configs[i];
+                const gate = config.pattern[ step % config.pattern.length ];
+                if( gate != rest ) {
+                    const player = config.player;
+                    // player.start(0);
+                    player.sync().start(time).stop(0.3);
+                    // synth.triggerAttackRelease("C3", "8n", time);
+                }
+
+                // console.debug(config.name);
             }
 
-            console.debug(config.name);
-        }
-        step = (step + 1) % Sequencer.numSteps;
-    }, "8n").start();
+            step = (step + 1) % Sequencer.numSteps;
+            // console.log("%f", time % loop.interval);
+    }, "8n").start(0);
 }
 
 function partAll(configs) {
     let step = 0;
+    const synth = new Tone.Synth().toDestination();
     const part = new Tone.Part((time, value) => {
-        for( let i = 0; i < configs.length; i++ ) {
-            const config = configs[i];
-            const gate = config.pattern[ step % config.pattern.length ];
-            if( gate != rest ) {
-                const player = config.player;
-                player.start(0,0,loop.interval);
-            }
+        synth.triggerAttackRelease("C3", "8n", time);
+        // for( let i = 0; i < configs.length; i++ ) {
+        //     const config = configs[i];
+        //     const gate = config.pattern[ step % config.pattern.length ];
+        //     if( gate != rest ) {
+        //         const player = config.player;
+        //         player.start(0,0,loop.interval);
+        //     }
 
-            console.debug(config.name);
-        }
-        step = (step + 1) % Sequencer.numSteps;
-    }, ["1n", 0]).start();
+        //     console.debug(config.name);
+        // }
+        // step = (step + 1) % Sequencer.numSteps;
+    }, ["1n", 0]).start(0);
 
     part.loop = true;
     part.playbackRate = 4;
@@ -257,19 +266,23 @@ function play() {
     snareConfig.player = newPlayer(snareConfig);
     hihatConfig.player = newPlayer(hihatConfig);
 
-    // const band = [bassConfig, leadConfig, kickConfig, snareConfig, hihatConfig]; // full
+    const band = [bassConfig, leadConfig, kickConfig, snareConfig, hihatConfig]; // full
     // const band = [kickConfig, snareConfig, hihatConfig]; // drumkit
-    const band = [kickConfig, snareConfig, hihatConfig]; // kick
-    // for( i = 0; i < band.length; i++ ) {
-    //     // console.log("%d: %o", i, band[i].pattern);
-    //     loop(band[i]);
-    // }
+    // const band = [kickConfig, snareConfig, hihatConfig]; // kick
+    for( i = 0; i < band.length; i++ ) {
+        // console.log("%d: %o", i, band[i].pattern);
+        loop(band[i]);
+    }
+
     // loopAll(band);
-    partAll(band);
 
     // loop(bassConfig);
 
+    // kickConfig.player.sync().start(0).stop(0.3);
+
     Tone.Transport.start();
+    // Tone.Transport.loop = true;
+    // Tone.Transport.loopEnd = 1;
 }
 
 function stop() {
