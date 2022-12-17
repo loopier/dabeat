@@ -57,12 +57,16 @@ function sampleStretchRatio( inSampleDur, inBpm ) {
     let sampleBars = sampleBeats / 4;
     let sampleBarsRounded = Math.round(sampleBars);
     let ratio = 1 / (sampleBars / Math.max(1, sampleBarsRounded));
-    console.log(`sample dur: ${inSampleDur}`);
-    console.log(`sample beats: ${sampleBeats}`);
-    console.log(`sample bars: ${sampleBars}`);
-    console.log(`sample bars rounded: ${sampleBarsRounded}`);
-    console.log(`sample stretch ratio: ${ratio}`);
+    console.debug("sample dur", inSampleDur);
+    console.debug("sample beats", sampleBeats);
+    console.debug("sample bars", sampleBars);
+    console.debug("sample bars rounded", sampleBarsRounded);
+    console.debug("sample stretch ratio", ratio);
     return ratio;
+}
+
+function sampleStretchRatioAccordingToPau( inSampleDur, inBpm ) {
+    return inSampleDur * (bpm/(bpm + 60))
 }
 
 /// \brief  divide the DURATION of a sample in a number of SLICES and return an array of STARTPOINTS
@@ -74,4 +78,18 @@ function chop(duration, slices) {
         startpoints.push(duration * i / slices);
     }
     return startpoints;
+}
+
+function printPlayer( config ) {
+    console.info("%s filename: ", config.name, config.filename);
+    console.info("%s rate:", config.name, config.player.playbackRate);
+    console.info("%s volume:", config.name, config.volume);
+    console.info("%s delaytime:", config.name, config.delaytime);
+    console.info("%s delayfb:", config.name, config.delayfb);
+    console.info("%s cutoff:", config.name, config.cutoff);
+    console.info("%s filter:", config.name, config.filter);
+    console.info("%s pan:", config.name, config.pan);
+    console.info("%s dur:", config.name, config.player.buffer.duration);
+    console.info("-----");
+
 }

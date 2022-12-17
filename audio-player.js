@@ -40,6 +40,7 @@ let bassConfig = {
     name: "bass",
     filename: starterFilename,
     filter : "lowpass",
+    rate: 1,
     cutoff : linexp(80, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
     pan : linlin(Math.random(), 0,1, -0.09, 0),
     delays: [0],
@@ -52,6 +53,7 @@ let leadConfig = {
     name: "lead",
     filename: starterFilename,
     filter : "highpass",
+    rate: 2,
     cutoff : linexp(linlin(Math.random(), 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
     pan : choose([-0.5,0.5]),
     delays: [0],
@@ -97,22 +99,12 @@ let hihatConfig = {
 };
 
 function newPlayer (playerConfig) {
-    console.info("filename: ", playerConfig.filename);
-    console.info("rate:", playerConfig.rate);
-    console.info("volume:", playerConfig.volume);
-    console.info("delaytime:", playerConfig.delaytime);
-    console.info("delayfb:", playerConfig.delayfb);
-    console.info("cutoff:", playerConfig.cutoff);
-    console.info("filter:", playerConfig.filter);
-    console.info("pan:", playerConfig.pan);
-    console.info("dur:", playerConfig.dur);
-
     const buf = new Tone.ToneAudioBuffer(playerConfig.filename, () => {
         console.info("bufer loaded:", playerConfig.filename);
     });
 
     let player = new Tone.Player(buf, () => {
-        console.info("player ready:", playerConfig.filename);
+        console.info("%s sample ready: %s", playerConfig.name, playerConfig.filename);
         console.info("player name:", playerConfig.name);
         if( playerConfig.name == "bass" || playerConfig.name == "lead" ) {
             console.debug("buffer duration:", buf.duration);
@@ -129,10 +121,13 @@ function newPlayer (playerConfig) {
             playerConfig.pattern = [];
             playerConfig.pattern.length = playerConfig.startPositions.length;
             playerConfig.pattern.fill(1);
+            // playerConfig.rate = sampleStretchRatioAccordingToPau( buf.duration, bpm ) * (playerConfig.name == "bass"? 1 : 2);
+            playerConfig.rate = sampleStretchRatio( buf.duration, bpm ) * (playerConfig.name == "bass"? 1 : 2);
 
             console.debug("parts:\n%o\n%o", partA, partB);
             console.debug("%s startpositions: %o", playerConfig.name, playerConfig.startPositions);
             console.debug("%s pattern:", playerConfig.name, playerConfig.pattern);
+            console.debug("%s rate:", playerConfig.name, playerConfig.rate);
 
         }
 
@@ -175,46 +170,35 @@ function newPlayer (playerConfig) {
 }
 
 function loop (config) {
-    let step = 0;
-    // default time to next sequencer event
-    console.info("sequencing:", config.name);
-    // console.debug("%s: %f", config.name, config.player.buffer.duration);
+    printPlayer(config);
 
+    let step = 0;
     let delay = 0;
     let accumulatedTime = 0;
     let loopInterval = Sequencer.beatDur;
 
     const loop = new Tone.Loop((time) => {
-        // triggered every eighth note.
-        // console.log(time);
-
         const gate = config.pattern ? config.pattern[step % config.pattern.length] : 1;
         if( gate != rest ) {
             const name = config.name;
             const player = config.player;
-            // const delay = config.delays[ step % config.delays.length ] * Tone.Time("8n");
             // subtracting the previous delay from the previous step
             loopInterval = loopInterval - delay;
             delay = Sequencer.beatDur * config.delays[ step % config.delays.length ];
             loopInterval = (Sequencer.beatDur * config.durs[ step % config.durs.length ]) + delay;
-            // const dur = loopInterval;
             const dur = "8n";
             const startPoint = config.startPositions[ step % config.startPositions.length ];
             const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
+
             player.volume.value = linlin(volume, -1, 1, -15, 15);
+            player.playbackRate = config.rate? config.rate : 1;
             player.start(time, startPoint, dur);
 
-            console.debug("%s start: %d", name, startPoint);
-            // console.debug("%s startpoints: %o", name, config.startPoints);
-            console.debug("startpositions index: %o:%o", step % config.startPositions.length, config.startPositions.length);
         } else {
             loopInterval = Sequencer.beatDur;
         }
-        step = (step + 1) % config.pattern.length;
 
-        // console.log(`${step}:${name} player:${config.filename} delay:${delay} start:${start} dur:${dur} vol:${config.volume}`);
-        // console.log(`${i}:${name} config.delay:${config.delays[ step % config.delays.length ]} delay:${delay}`);
-        // console.log(`${i} player:${player}`);
+        step = (step + 1) % config.pattern.length;
 
         accumulatedTime += loopInterval;
         let modulo = accumulatedTime % Sequencer.numbteps;
@@ -223,18 +207,6 @@ function loop (config) {
             console.debug("modulo:", modulo);
             accumulatedTime = 0;
         }
-        // console.debug('%d:%s interval: %f', step, config.name, loopInterval)
-        // console.debug("time:       ", time)
-        // console.debug("time delta: ", time - oldtime);
-        // console.debug("name: ", name);
-        // console.debug("player: ", config.filename);
-        // console.debug("delay: ", delay);
-        // console.debug("dur: ", dur);
-        // console.debug("start: ", start);
-        // console.debug("dur: ", dur);
-        // console.debug("volume:", config.volume, " gain: ", player.volume.value);
-        // console.debug("gate: ", gate);
-        // console.debug("---");
 
     }, loopInterval).start();
 
@@ -248,25 +220,11 @@ function play() {
     // prevent overdub
     stop();
 
-
-
     bassConfig.player = newPlayer(bassConfig);
     leadConfig.player = newPlayer(leadConfig);
     kickConfig.player = newPlayer(kickConfig);
     snareConfig.player = newPlayer(snareConfig);
     hihatConfig.player = newPlayer(hihatConfig);
-
-    // bassConfig.startPoints = chop(bassConfig.player.buffer.duration, 8);
-    // leadConfig.startPoints = chop(leadConfig.player.buffer.duration, 8);
-    // console.debug("bass startpoints:", bassConfig.startPoints);
-    // console.debug("lead startpoints:", leadConfig.startPoints);
-
-    // const band = [bassConfig, leadConfig, kickConfig, snareConfig, hihatConfig]; // full
-    // const band = [kickConfig, snareConfig, hihatConfig]; // drumkit
-    // for( i = 0; i < band.length; i++ ) {
-    //     // console.log("%d: %o", i, band[i].pattern);
-    //     loop(band[i]);
-    // }
 
     Tone.Transport.start();
 }
