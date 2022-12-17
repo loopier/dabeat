@@ -63,6 +63,11 @@ let leadConfig = {
 };
 
 // drumkit
+//
+// WARNING!:
+// There are 2 types of drum delay: drumkit delay (general), and individual delay.
+// The INDIVIDUAL delay is a SEQUENCE with a size equal to that of PATTERN. Delays
+// in the same slots as 'rests' won't have any effect.
 const drumkitDelay = 0;//linlin(Math.random(), 0,1, 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
 const drumkitVolume = 1.1;
 // kick
@@ -70,9 +75,8 @@ let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickConfig = {
     name: "kick",
     filename: kickBaseUrl + choose(kicks), // 'kicks' is declared in kick-filenames.js
-    pattern : [1,0,0,0,1,0,0,0],
-    // delays : [0.01, 0, 0.03, 0, 0.16, 0, 0.18, 0].map(x => x * drumkitDelay),
-    delays : [1].map(x => x * drumkitDelay),
+    pattern : [1,  0,0,0,   1,0,0,0],
+    delays :  [0.3,0,0,0,-0.3,0,0,0].map(x => x + drumkitDelay),
     startPositions: [0],
     durs: [1],
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
@@ -82,7 +86,7 @@ let snareConfig = {
     name: "snare",
     filename: snareBaseUrl + choose(snares), // 'kicks' is declared in kick-filenames.js
     pattern : [0,1],
-    delays : [1].map(x => x * drumkitDelay),
+    delays : [1].map(x => x + drumkitDelay),
     startPositions: [0],
     durs: [1],
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
@@ -92,7 +96,7 @@ let hihatConfig = {
     name: "hihat",
     filename: hihatBaseUrl + choose(hats), // 'kicks' is declared in kick-filenames.js
     pattern : [1,1,1,1,1,1,1,1],
-    delays : [1].map(x => x * drumkitDelay),
+    delays : [1].map(x => x + drumkitDelay),
     startPositions: [0],
     durs: [1],
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
@@ -192,8 +196,9 @@ function loop (config) {
 
             player.volume.value = linlin(volume, -1, 1, -15, 15);
             player.playbackRate = config.rate? config.rate : 1;
-            player.start(time, startPoint, dur);
+            player.start(time + delay, startPoint, dur);
 
+            console.log("delay[%d]: %f", step % config.delays.length, config.delays[step % config.delays.length]);
         } else {
             loopInterval = Sequencer.beatDur;
         }
@@ -220,6 +225,8 @@ function play() {
     // prevent overdub
     stop();
 
+    starterFilename = starterBaseUrl + choose(starters); // 'starters' is declared in kick-filenames.js
+
     bassConfig.player = newPlayer(bassConfig);
     leadConfig.player = newPlayer(leadConfig);
     kickConfig.player = newPlayer(kickConfig);
@@ -232,5 +239,10 @@ function play() {
 function stop() {
     if( Tone.Transport.state != "started") return;
     Tone.Transport.stop();
+    bassConfig.player.dispose();
+    leadConfig.player.dispose();
+    kickConfig.player.dispose();
+    snareConfig.player.dispose();
+    hihatConfig.player.dispose();
 }
 
