@@ -233,6 +233,7 @@ function play() {
     snareConfig.player = newPlayer(snareConfig);
     hihatConfig.player = newPlayer(hihatConfig);
 
+    Tone.Transport.bpm.value = bpm;
     Tone.Transport.start();
 }
 
