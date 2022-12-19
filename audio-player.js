@@ -1,10 +1,10 @@
 // TODO:
 //
-// - fix bpm
-// - random lead play (+ canviar filtre baix dinàmicament)
-// - introduir valors delays als arrays
-// - mapejar seeds a variables
-// - acabar UI
+// - [x] fix bpm
+// - [ ] random lead play (+ canviar filtre baix dinàmicament)
+// - [ ] introduir valors delays als arrays
+// - [ ] mapejar seeds a variables
+// - [ ] acabar UI
 
 // global vars
 // random seeds
