@@ -83,8 +83,8 @@ let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickConfig = {
     name: "kick",
     filename: kickBaseUrl + choose(kicks), // 'kicks' is declared in kick-filenames.js
-    pattern : [1,  0,0,0,   1,0,0,0],
-    delays :  [0.13,0,0,0,-0.2,0,0,0].map(x => x + drumkitDelay),
+    pattern : [1,0,1,0, 1,0,1,0],
+    delays :  [0,0,0,0, 0,0,0,0].map(x => x + drumkitDelay),
     startPositions: [0],
     durs: [1],
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
@@ -248,8 +248,10 @@ function play() {
     snareConfig.player = newPlayer(snareConfig);
     hihatConfig.player = newPlayer(hihatConfig);
 
-    Tone.Transport.start();
-    Tone.Transport.bpm.value = bpm;
+    Tone.Transport.start("+1", "0:0:0");
+    // FIX: bad hack. Couldn't find a better way to set the tempo...
+    //      ...bpm.value = x doesn't seem to work, not even before calling start()
+    Tone.Transport.bpm.rampTo(bpm, 0.1);
 }
 
 function stop() {
