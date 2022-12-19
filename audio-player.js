@@ -1,3 +1,11 @@
+// TODO:
+//
+// - fix bpm
+// - random lead play (+ canviar filtre baix dinàmicament)
+// - introduir valors delays als arrays
+// - mapejar seeds a variables
+// - acabar UI
+
 // global vars
 // random seeds
 let randseed1 = 0;
@@ -81,16 +89,18 @@ let kickConfig = {
     durs: [1],
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
+// snare
 let snareBaseUrl = baseSamplesDirectoryUrl + "ab-snares-snaps-claps/";
 let snareConfig = {
     name: "snare",
     filename: snareBaseUrl + choose(snares), // 'kicks' is declared in kick-filenames.js
-    pattern : [0,1,0,1,0,1,0,1],
-    delays : [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay),
+    pattern : [0,0,1,0,0,0,1,0],
+    delays :  [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay),
     startPositions: [0],
     durs: [1],
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
+// hats
 let hihatBaseUrl = baseSamplesDirectoryUrl + "ab-hats/";
 let hihatConfig = {
     name: "hihat",
@@ -181,6 +191,11 @@ function loop (config) {
     let accumulatedTime = 0;
     let loopInterval = Sequencer.beatDur;
 
+    if( config.name == "lead" ) {
+        let isLeadPlaying = Math.round(Math.random());
+        console.log("lead rand: %s:%i", config.name, b)
+        if(!b) {console.log("returning"); return}
+    }
     const loop = new Tone.Loop((time) => {
         const gate = config.pattern ? config.pattern[step % config.pattern.length] : 1;
         if( gate != rest ) {
@@ -233,8 +248,8 @@ function play() {
     snareConfig.player = newPlayer(snareConfig);
     hihatConfig.player = newPlayer(hihatConfig);
 
-    Tone.Transport.bpm.value = bpm;
     Tone.Transport.start();
+    Tone.Transport.bpm.value = bpm;
 }
 
 function stop() {
