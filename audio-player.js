@@ -43,19 +43,7 @@ let baseSamplesDirectoryUrl = "samples/";
 let starterBaseUrl = baseSamplesDirectoryUrl + "starters/";
 let starterFilename = starterBaseUrl + choose(starters); // 'starters' is declared in kick-filenames.js
 let isStarterReady = false;
-// bass
-let bassConfig = {
-    name: "bass",
-    filename: starterFilename,
-    filter : "lowpass",
-    rate: 1,
-    cutoff : linexp(80, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
-    pan : linlin(Math.random(), 0,1, -0.09, 0),
-    delays: [0],
-    startPositions: [0],
-    durs: [1],
-    volume: 1,
-};
+let playLead = Math.round(Math.random());
 // lead
 let leadConfig = {
     name: "lead",
@@ -64,6 +52,21 @@ let leadConfig = {
     rate: 2,
     cutoff : linexp(linlin(Math.random(), 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
     pan : choose([-0.5,0.5]),
+    delays: [0],
+    startPositions: [0],
+    durs: [1],
+    volume: 1,
+    play: playLead,
+};
+// bass
+let bassConfig = {
+    name: "bass",
+    filename: starterFilename,
+    filter : "lowpass",
+    rate: 1,
+    // set cutoff to a higher value if lead is not playing
+    cutoff : linexp(playLead? 80:100, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
+    pan : linlin(Math.random(), 0,1, -0.09, 0),
     delays: [0],
     startPositions: [0],
     durs: [1],
@@ -191,11 +194,15 @@ function loop (config) {
     let accumulatedTime = 0;
     let loopInterval = Sequencer.beatDur;
 
-    if( config.name == "lead" ) {
-        let isLeadPlaying = Math.round(Math.random());
-        console.log("lead rand: %s:%i", config.name, b)
-        if(!b) {console.log("returning"); return}
+    console.log("playing lead:", config.play);
+    if( config.name == "lead" && (config.play == false || config.play == undefined)) {
+        console.log("don't play lead");
+        return;
+    } else {
+        console.log("playing lead");
     }
+
+
     const loop = new Tone.Loop((time) => {
         const gate = config.pattern ? config.pattern[step % config.pattern.length] : 1;
         if( gate != rest ) {
@@ -252,6 +259,9 @@ function play() {
     // FIX: bad hack. Couldn't find a better way to set the tempo...
     //      ...bpm.value = x doesn't seem to work, not even before calling start()
     Tone.Transport.bpm.rampTo(bpm, 0.1);
+
+    // console.info("BPM: ", Tone.Transport.bpm.value);
+    console.info("BPM: ", bpm);
 }
 
 function stop() {
