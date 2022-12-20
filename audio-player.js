@@ -1,6 +1,7 @@
 // TODO:
 //
 // - [x] fix bpm
+// - [ ] add seeded random modifiers to newPlayer(); this allows to create new player values on the fly.
 // - [ ] random lead play (+ canviar filtre baix dinàmicament)
 // - [ ] introduir valors delays als arrays
 // - [ ] mapejar seeds a variables
@@ -8,9 +9,14 @@
 
 // global vars
 // random seeds
-let randseed1 = 0;
-let randseed2 = 0;
-let randseed3 = 0;
+// general random
+let randseed1 = seedrandom(1);
+// drumkit delay
+let randseed2 = seedrandom(2);
+// lead + bass || bass
+let randseed3 = seedrandom(3);
+// sample choice
+let randseed4 = seedrandom(4);
 
 // sonic-pi filter frequency range mapping
 const sonicPiFilterMin = 0;
@@ -79,7 +85,7 @@ let bassConfig = {
 // There are 2 types of drum delay: drumkit delay (general), and individual delay.
 // The INDIVIDUAL delay is a SEQUENCE with a size equal to that of PATTERN. Delays
 // in the same slots as 'rests' won't have any effect.
-const drumkitDelay = 0;//linlin(Math.random(), 0,1, 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
+const drumkitDelay = linlin(Math.seedrandom(), 0,1, 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
 const drumkitVolume = 1.1;
 // kick
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
@@ -119,6 +125,8 @@ function newPlayer (playerConfig) {
     const buf = new Tone.ToneAudioBuffer(playerConfig.filename, () => {
         console.info("bufer loaded:", playerConfig.filename);
     });
+
+    // TODO: add seeded random modifiers
 
     let player = new Tone.Player(buf, () => {
         console.info("%s sample ready: %s", playerConfig.name, playerConfig.filename);
@@ -194,12 +202,9 @@ function loop (config) {
     let accumulatedTime = 0;
     let loopInterval = Sequencer.beatDur;
 
-    console.log("playing lead:", config.play);
     if( config.name == "lead" && (config.play == false || config.play == undefined)) {
-        console.log("don't play lead");
+        console.debug("don't play lead");
         return;
-    } else {
-        console.log("playing lead");
     }
 
 
