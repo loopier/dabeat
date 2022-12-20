@@ -93,3 +93,11 @@ function printPlayer( config ) {
     console.info("-----");
 
 }
+
+/// \brief  return a seeded random number
+///
+/// see ./seedrandom.min.js
+function seedrandom( seed ) {
+    let rand = new Math.seedrandom(seed);
+    return rand();
+}
