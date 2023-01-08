@@ -7,11 +7,10 @@
 // - [ ] mapejar seeds a variables
 // - [ ] acabar UI
 // - all variables are either randomseeded or determined by user
-// - chop AAAB son corxees + chop AAAB son negres
+// - chop AAAB son 8 o 16 beats
 // - dur rand(x,y) - legato
 // - + delay de cada kit
 // - conditional triggers drumkit [0.0,1.0]
-// - 16-step patterns
 
 // global vars
 // random seeds
@@ -97,7 +96,7 @@ let bassConfig = {
 //const drumkitDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
 const drumkitDelay = 0; 
 const drumkitVolume = 1.1;
-const drumkitDur ="8n";
+const drumkitDur = beatDur;
 // kick
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickConfig = {
@@ -230,8 +229,8 @@ function loop (config) {
             const player = config.player;  
                   
             // subtracting the previous delay from the previous step
-            //loopInterval = loopInterval - delay;
-            //console.debug("loop: %s, delay: %s", loopInterval, loopInterval - delay);
+            loopInterval = loopInterval - delay;
+            console.debug("name: %s, loop: %s, delay: %s, dif: %s", name, loopInterval, delay, loopInterval - delay);
             //delay = loopInterval * config.delays[ step % config.delays.length ];
             //console.debug("obj: %s, dur: %s, configDelays: %s, step: %s, delaysLength: %s", config.name, config.dur, config.delays, step, delay);
             //loopInterval = loopInterval + delay;
@@ -246,8 +245,6 @@ function loop (config) {
 
             // console.debug("%s delay[%d]: %f", config.name, step % config.delays.length, config.delays[step % config.delays.length]);
             console.debug("name: %s, interval: %s, dur: %s", config.name, loopInterval, config.dur);
-        } else {
-            loopInterval = config.dur;
         }
 
         step = (step + 1) % config.pattern.length;
