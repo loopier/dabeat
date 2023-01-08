@@ -17,6 +17,7 @@
 // general random
 //
 let randseed1 = seedrandom(Math.random());
+// let randseed1 = seedrandom(1);
 // drumkit delay
 let randseed2 = seedrandom(2);
 // lead + bass || bass
@@ -93,8 +94,7 @@ let bassConfig = {
 // There are 2 types of drum delay: drumkit delay (general), and individual delay.
 // The INDIVIDUAL delay is a SEQUENCE with a size equal to that of PATTERN. Delays
 // in the same slots as 'rests' won't have any effect.
-//const drumkitDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
-const drumkitDelay = 0; 
+const drumkitDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
 const drumkitVolume = 1.1;
 const drumkitDur = beatDur;
 // kick
@@ -102,7 +102,7 @@ let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickConfig = {
     name: "kick",
     filename: kickBaseUrl + choose(kicks), // 'kicks' is declared in kick-filenames.js
-    pattern : [1,0,1,0, 1,0,1,0],
+    pattern : [1,0,1,0, 1,0,1,0], // playing probability - 1=always; 0=never; 0.5=50%
     delays :  [0,0,0,0, 0,0,0,0].map(x => x + drumkitDelay),
     startPositions: [0],
     dur: drumkitDur,
@@ -113,18 +113,19 @@ let snareBaseUrl = baseSamplesDirectoryUrl + "ab-snares-snaps-claps/";
 let snareConfig = {
     name: "snare",
     filename: snareBaseUrl + choose(snares), // 'kicks' is declared in kick-filenames.js
-    pattern : [0,0,1,0,0,0,1,0],
+    pattern : [0,0,1,0,0,0,1,0], // playing probability - 1=always; 0=never; 0.5=50%
     delays :  [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay),
     startPositions: [0],
     dur: drumkitDur,
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
+console.debug(snareConfig.pattern);
 // hats
 let hihatBaseUrl = baseSamplesDirectoryUrl + "ab-hats/";
 let hihatConfig = {
     name: "hihat",
     filename: hihatBaseUrl + choose(hats), // 'kicks' is declared in kick-filenames.js
-    pattern : [1,1,1,1,1,1,1,1],
+    pattern : [1,1,1,1,1,1,1,1], // playing probability - 1=always; 0=never; 0.5=50%
     delays : [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay),
     startPositions: [0],
     dur: drumkitDur,
@@ -223,24 +224,22 @@ function loop (config) {
 
     const loop = new Tone.Loop((time) => {
         const gate = config.pattern ? config.pattern[step % config.pattern.length] : 1;
+        console.debug("name: %s gate: %f", config.name, gate);
          
-        if( gate != rest ) {
+        if( gate != rest && gate > Math.random() ) {
             const name = config.name;
-            const player = config.player;  
+            const player = config.player;
                   
             // subtracting the previous delay from the previous step
             loopInterval = loopInterval - delay;
-            console.debug("name: %s, loop: %s, delay: %s, dif: %s", name, loopInterval, delay, loopInterval - delay);
-            //delay = loopInterval * config.delays[ step % config.delays.length ];
-            //console.debug("obj: %s, dur: %s, configDelays: %s, step: %s, delaysLength: %s", config.name, config.dur, config.delays, step, delay);
-            //loopInterval = loopInterval + delay;
+            // console.debug("name: %s, loop: %s, delay: %s, dif: %s", name, loopInterval, delay, loopInterval - delay);
+            delay = loopInterval * config.delays[ step % config.delays.length ];
+            loopInterval = loopInterval + delay;
             const startPoint = config.startPositions[ step % config.startPositions.length ];
             const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
 
             player.volume.value = linlin(volume, -1, 1, -15, 15);
             player.playbackRate = config.rate ? config.rate : 1;
-            // console.debug("time: %s, delay: %s, startpoint: %s, dur: %s", time, delay , startPoint, dur);
-            // player.start(time + delay, startPoint, config.dur);
             player.start(time + delay, startPoint, loopInterval);
 
             // console.debug("%s delay[%d]: %f", config.name, step % config.delays.length, config.delays[step % config.delays.length]);
