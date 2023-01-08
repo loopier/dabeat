@@ -6,11 +6,11 @@
 // - [ ] introduir valors delays als arrays
 // - [ ] mapejar seeds a variables
 // - [ ] acabar UI
-// - all variables are either randomseeded or determined by user
-// - chop AAAB son 8 o 16 beats
-// - dur rand(x,y) - legato
-// - + delay de cada kit
-// - conditional triggers drumkit [0.0,1.0]
+// - [ ] all variables are either randomseeded or determined by user
+// - [ ] chop AAAB son 8 o 16 beats
+// - [ ] dur rand(x,y) - legato
+// - [ ] + delay de cada kit
+// - [x] conditional triggers drumkit [0.0,1.0]
 
 // global vars
 // random seeds
@@ -87,39 +87,42 @@ let bassConfig = {
 // There are 2 types of drum delay: drumkit delay (general), and individual delay.
 // The INDIVIDUAL delay is a SEQUENCE with a size equal to that of PATTERN. Delays
 // in the same slots as 'rests' won't have any effect.
-const drumkitDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
+const drumkitDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.05) + (choose([-1,1]) * randseed1 / 90);
 const drumkitVolume = 1.1;
 const drumkitDur = beatDur;
 // kick
+const kickDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.087) + (choose([-1,1]) * randseed1 / 30);
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickConfig = {
     name: "kick",
     filename: kickBaseUrl + choose(kicks), // 'kicks' is declared in kick-filenames.js
     pattern : [1,0,1,0, 1,0,1,0], // playing probability - 1=always; 0=never; 0.5=50%
-    delays :  [0,0,0,0, 0,0,0,0].map(x => x + drumkitDelay),
+    delays :  [0,0,0,0, 0,0,0,0].map(x => x + drumkitDelay + kickDelay),
     startPositions: [0],
     dur: drumkitDur,
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
 // snare
+const snareDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.076) + (choose([-1.5,1.5]) * randseed1 / 30);
 let snareBaseUrl = baseSamplesDirectoryUrl + "ab-snares-snaps-claps/";
 let snareConfig = {
     name: "snare",
     filename: snareBaseUrl + choose(snares), // 'kicks' is declared in kick-filenames.js
     pattern : [0,0,1,0,0,0,1,0], // playing probability - 1=always; 0=never; 0.5=50%
-    delays :  [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay),
+    delays :  [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay + snareDelay),
     startPositions: [0],
     dur: drumkitDur,
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
 console.debug(snareConfig.pattern);
 // hats
+const hihatDelay = linlin(seedrand(randseed1), 0, 1, -0.01, 0.05 + 0.005 * randseed1);
 let hihatBaseUrl = baseSamplesDirectoryUrl + "ab-hats/";
 let hihatConfig = {
     name: "hihat",
     filename: hihatBaseUrl + choose(hats), // 'kicks' is declared in kick-filenames.js
     pattern : [1,1,1,1,1,1,1,1], // playing probability - 1=always; 0=never; 0.5=50%
-    delays : [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay),
+    delays : [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay + hihatDelay),
     startPositions: [0],
     dur: drumkitDur,
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
