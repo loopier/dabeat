@@ -2,18 +2,16 @@
 // helpers
 ////////////////////////////////////////////////////////////////////////////////
 
-/// \brief  create a score of SIZE * 3 items of PARTA, and SIZE items of PARTB
-function createScore( size, partA, partB ) {
+/// \brief  create a score with an AAAB structure with PARTA and PARTB
+function createScore( partA, partB ) {
     let score = [];
-    for (let i = 0; i < size * 3; i++) {
-        console.debug("partA #", i, ": ", partA);
+    for (let i = 0; i < 3; i++) {
+        // console.debug("partA #", i, ": ", partA);
         score.push(partA);
     }
-    for (let i = 0; i < size; i++) {
-        console.debug("partB #", i, ": ", partB);
-        score.push(partB);
-    }
-    console.debug("created score of %d bars", score.length);
+    // console.debug("partB #", i, ": ", partB);
+    score.push(partB);
+    // console.debug("created score of %d bars", score.length);
     return score.flat();
 }
 

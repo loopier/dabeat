@@ -39,14 +39,6 @@ const rest = 0;
 // tempo
 let bpm = linlin(Math.random(), 0, 1, 86,98);
 
-// musical structure
-const ScoreStructure = {
-    AAAB: 1,
-    AAAAAABB: 2,
-};
-
-// define structure to be used
-const scoreStructure = ScoreStructure.AAAB;
 // number of slices per part (A and B)
 const numSlices = seedChoose(randseed1, [8,16]);
 console.debug("num slices: %d", numSlices);
@@ -153,7 +145,7 @@ function newPlayer (playerConfig) {
             const chunks = chop(buf.duration, numBeats);
             const partA = choosen(chunks, numSlices);
             const partB = choosen(chunks, numSlices);
-            playerConfig.startPositions = createScore(scoreStructure, partA, partB);
+            playerConfig.startPositions = createScore(partA, partB);
             // create a pattern to play all steps in the score structure
             playerConfig.pattern = [];
             playerConfig.pattern.length = playerConfig.startPositions.length;
