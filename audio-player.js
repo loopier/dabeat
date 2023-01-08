@@ -6,10 +6,17 @@
 // - [ ] introduir valors delays als arrays
 // - [ ] mapejar seeds a variables
 // - [ ] acabar UI
+// - all variables are either randomseeded or determined by user
+// - chop AAAB son corxees + chop AAAAAAB son negres
+// - dur rand(x,y) - legato
+// - + delay de cada kit
+// - conditional triggers drumkit [0.0,1.0]
+// - 16-step patterns
 
 // global vars
 // random seeds
 // general random
+//
 let randseed1 = seedrandom(1);
 // drumkit delay
 let randseed2 = seedrandom(2);
@@ -26,7 +33,7 @@ const hzMax = 20000;
 
 // sequencer
 const Sequencer = { numSteps: 8, beatDur: Tone.Time("8n").toSeconds() };
-console.debug("sequencer:", Sequencer);
+// console.debug("sequencer:", Sequencer);
 const rest = 0;
 // tempo
 let bpm = linlin(Math.random(), 0, 1, 86,98);
