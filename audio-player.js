@@ -48,7 +48,8 @@ const ScoreStructure = {
 // define structure to be used
 const scoreStructure = ScoreStructure.AAAB;
 // number of slices per part (A and B)
-const numSlices = 8;
+const numSlices = seedChoose(randseed1, [8,16]);
+console.debug("num slices: %d", numSlices);
 
 /// Variables holding arrays with sample file names are in dedicated files for
 /// each group. This makes it easier to generate and maintain.
