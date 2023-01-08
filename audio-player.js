@@ -7,9 +7,9 @@
 // - [ ] mapejar seeds a variables
 // - [ ] acabar UI
 // - [ ] all variables are either randomseeded or determined by user
-// - [ ] chop AAAB son 8 o 16 beats
-// - [ ] dur rand(x,y) - legato
-// - [ ] + delay de cada kit
+// - [x] chop AAAB son 8 o 16 beats
+// - [x] dur rand(x,y) - legato
+// - [x] + delay de cada kit
 // - [x] conditional triggers drumkit [0.0,1.0]
 
 // global vars
@@ -62,6 +62,7 @@ let leadConfig = {
     pan : choose([-0.5,0.5]),
     delays: [0],
     startPositions: [0],
+    legato: linlin(seedrand(randseed1), 0, 1, 0.6, 0.8),
     dur: beatDur,
     volume: 1,
     play: playLead,
@@ -220,26 +221,25 @@ function loop (config) {
 
     const loop = new Tone.Loop((time) => {
         const gate = config.pattern ? config.pattern[step % config.pattern.length] : 1;
-        console.debug("name: %s gate: %f", config.name, gate);
-         
+
         if( gate != rest && gate > Math.random() ) {
             const name = config.name;
             const player = config.player;
                   
             // subtracting the previous delay from the previous step
             loopInterval = loopInterval - delay;
-            // console.debug("name: %s, loop: %s, delay: %s, dif: %s", name, loopInterval, delay, loopInterval - delay);
             delay = loopInterval * config.delays[ step % config.delays.length ];
             loopInterval = loopInterval + delay;
             const startPoint = config.startPositions[ step % config.startPositions.length ];
             const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
+            const legato = loopInterval * (config.legato ? config.legato : 1);
 
             player.volume.value = linlin(volume, -1, 1, -15, 15);
             player.playbackRate = config.rate ? config.rate : 1;
-            player.start(time + delay, startPoint, loopInterval);
+            player.start(time + delay, startPoint, legato);
 
             // console.debug("%s delay[%d]: %f", config.name, step % config.delays.length, config.delays[step % config.delays.length]);
-            console.debug("name: %s, interval: %s, dur: %s", config.name, loopInterval, config.dur);
+            // console.debug("name: %s, interval: %s, dur: %s", config.name, loopInterval, config.dur);
         }
 
         step = (step + 1) % config.pattern.length;
