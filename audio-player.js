@@ -7,7 +7,7 @@
 // - [ ] mapejar seeds a variables
 // - [ ] acabar UI
 // - all variables are either randomseeded or determined by user
-// - chop AAAB son corxees + chop AAAAAAB son negres
+// - chop AAAB son corxees + chop AAAB son negres
 // - dur rand(x,y) - legato
 // - + delay de cada kit
 // - conditional triggers drumkit [0.0,1.0]
@@ -17,7 +17,7 @@
 // random seeds
 // general random
 //
-let randseed1 = seedrandom(1);
+let randseed1 = seedrandom(Math.random());
 // drumkit delay
 let randseed2 = seedrandom(2);
 // lead + bass || bass
@@ -32,8 +32,9 @@ const hzMin = 20;
 const hzMax = 20000;
 
 // sequencer
-const Sequencer = { numSteps: 8, beatDur: Tone.Time("8n").toSeconds() };
-// console.debug("sequencer:", Sequencer);
+//const beatDur = Tone.Time("8n").toSeconds();
+const beatDur = "8n";
+const numSteps = 8;
 const rest = 0;
 // tempo
 let bpm = linlin(Math.random(), 0, 1, 86,98);
@@ -43,6 +44,7 @@ const ScoreStructure = {
     AAAB: 1,
     AAAAAABB: 2,
 };
+
 // define structure to be used
 const scoreStructure = ScoreStructure.AAAB;
 // number of slices per part (A and B)
@@ -67,7 +69,7 @@ let leadConfig = {
     pan : choose([-0.5,0.5]),
     delays: [0],
     startPositions: [0],
-    durs: [1],
+    dur: beatDur,
     volume: 1,
     play: playLead,
 };
@@ -82,7 +84,7 @@ let bassConfig = {
     pan : linlin(Math.random(), 0,1, -0.09, 0),
     delays: [0],
     startPositions: [0],
-    durs: [1],
+    dur: beatDur ,
     volume: 1,
 };
 
@@ -92,8 +94,10 @@ let bassConfig = {
 // There are 2 types of drum delay: drumkit delay (general), and individual delay.
 // The INDIVIDUAL delay is a SEQUENCE with a size equal to that of PATTERN. Delays
 // in the same slots as 'rests' won't have any effect.
-const drumkitDelay = linlin(Math.seedrandom(), 0,1, 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
+//const drumkitDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.5) + (choose([-1,1]) * randseed1 / 90);
+const drumkitDelay = 0; 
 const drumkitVolume = 1.1;
+const drumkitDur ="8n";
 // kick
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickConfig = {
@@ -102,7 +106,7 @@ let kickConfig = {
     pattern : [1,0,1,0, 1,0,1,0],
     delays :  [0,0,0,0, 0,0,0,0].map(x => x + drumkitDelay),
     startPositions: [0],
-    durs: [1],
+    dur: drumkitDur,
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
 // snare
@@ -113,7 +117,7 @@ let snareConfig = {
     pattern : [0,0,1,0,0,0,1,0],
     delays :  [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay),
     startPositions: [0],
-    durs: [1],
+    dur: drumkitDur,
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
 // hats
@@ -124,7 +128,7 @@ let hihatConfig = {
     pattern : [1,1,1,1,1,1,1,1],
     delays : [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay),
     startPositions: [0],
-    durs: [1],
+    dur: drumkitDur,
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
 
@@ -168,6 +172,10 @@ function newPlayer (playerConfig) {
 
 
     // add effects
+
+
+
+
     //
     // 'lastModule' is used to dynamically add effects to the chain and connect the last one
     // to the '.toDestionation()' function.
@@ -207,40 +215,45 @@ function loop (config) {
     let step = 0;
     let delay = 0;
     let accumulatedTime = 0;
-    let loopInterval = Sequencer.beatDur;
-
+    let loopInterval = Tone.Time(config.dur).toSeconds(); 
+    
     if( config.name == "lead" && (config.play == false || config.play == undefined)) {
         console.debug("don't play lead");
         return;
     }
 
-
     const loop = new Tone.Loop((time) => {
         const gate = config.pattern ? config.pattern[step % config.pattern.length] : 1;
+         
         if( gate != rest ) {
             const name = config.name;
-            const player = config.player;
+            const player = config.player;  
+                  
             // subtracting the previous delay from the previous step
-            loopInterval = loopInterval - delay;
-            delay = Sequencer.beatDur * config.delays[ step % config.delays.length ];
-            loopInterval = (Sequencer.beatDur * config.durs[ step % config.durs.length ]) + delay;
-            const dur = "8n";
+            //loopInterval = loopInterval - delay;
+            //console.debug("loop: %s, delay: %s", loopInterval, loopInterval - delay);
+            //delay = loopInterval * config.delays[ step % config.delays.length ];
+            //console.debug("obj: %s, dur: %s, configDelays: %s, step: %s, delaysLength: %s", config.name, config.dur, config.delays, step, delay);
+            //loopInterval = loopInterval + delay;
             const startPoint = config.startPositions[ step % config.startPositions.length ];
             const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
 
             player.volume.value = linlin(volume, -1, 1, -15, 15);
-            player.playbackRate = config.rate? config.rate : 1;
-            player.start(time + delay, startPoint, dur);
+            player.playbackRate = config.rate ? config.rate : 1;
+            // console.debug("time: %s, delay: %s, startpoint: %s, dur: %s", time, delay , startPoint, dur);
+            // player.start(time + delay, startPoint, config.dur);
+            player.start(time + delay, startPoint, loopInterval);
 
-            console.debug("%s delay[%d]: %f", config.name, step % config.delays.length, config.delays[step % config.delays.length]);
+            // console.debug("%s delay[%d]: %f", config.name, step % config.delays.length, config.delays[step % config.delays.length]);
+            console.debug("name: %s, interval: %s, dur: %s", config.name, loopInterval, config.dur);
         } else {
-            loopInterval = Sequencer.beatDur;
+            loopInterval = config.dur;
         }
 
         step = (step + 1) % config.pattern.length;
 
-        accumulatedTime += loopInterval;
-        let modulo = accumulatedTime % Sequencer.numbteps;
+        accumulatedTime += 1;
+        let modulo = accumulatedTime % numSteps;
         if( step == 7 ){
             console.debug("accumulated time:", accumulatedTime);
             console.debug("modulo:", modulo);

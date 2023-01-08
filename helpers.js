@@ -30,6 +30,11 @@ function choose(list) {
     return list[Math.floor(Math.random() * list.length)];
 }
 
+/// \brief  Returns a seeded random element from the list.
+function seedChoose(seed, list){
+    return list[Math.floor(seedrand(seed) * list.length)];
+}
+
 /// \brief  Returns an array of LENGTH elements from LIST
 function choosen(list, length) {
     let choice = [];
