@@ -98,7 +98,8 @@ let kickConfig = {
     name: "kick",
     filename: kickBaseUrl + choose(kicks), // 'kicks' is declared in kick-filenames.js
     pattern : [1,0,1,0, 1,0,1,0], // playing probability - 1=always; 0=never; 0.5=50%
-    delays :  [0,0,0,0, 0,0,0,0].map(x => x + drumkitDelay + kickDelay),
+    //delays :  [0,0.93,0.72,0.74,1.7,0.83,0.97,0.5].map(x => x + drumkitDelay + kickDelay)
+    delays :  [0,-0.07,-0.35,0.39,1.09,-0.08,-0.11,0.39].map(x => x + drumkitDelay + kickDelay),
     startPositions: [0],
     dur: drumkitDur,
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
@@ -109,8 +110,8 @@ let snareBaseUrl = baseSamplesDirectoryUrl + "ab-snares-snaps-claps/";
 let snareConfig = {
     name: "snare",
     filename: snareBaseUrl + choose(snares), // 'kicks' is declared in kick-filenames.js
-    pattern : [0,0,1,0,0,0,1,0], // playing probability - 1=always; 0=never; 0.5=50%
-    delays :  [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay + snareDelay),
+    pattern : [0,0,1,0,0,0,1,0.1], // playing probability - 1=always; 0=never; 0.5=50%
+    delays :  [0,0,0.02,0,0,0,0,-0.15].map(x => x + drumkitDelay + snareDelay),
     startPositions: [0],
     dur: drumkitDur,
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
@@ -122,11 +123,11 @@ let hihatBaseUrl = baseSamplesDirectoryUrl + "ab-hats/";
 let hihatConfig = {
     name: "hihat",
     filename: hihatBaseUrl + choose(hats), // 'kicks' is declared in kick-filenames.js
-    pattern : [1,1,1,1,1,1,1,1], // playing probability - 1=always; 0=never; 0.5=50%
-    delays : [0,0,0,0,0,0,0,0].map(x => x + drumkitDelay + hihatDelay),
+    pattern : [0.933,1,1,1,1,1,1,0.833], // playing probability - 1=always; 0=never; 0.5=50%
+    delays : [0,0.02,0,0.02,0,0.02,0,0.02].map(x => x + drumkitDelay + hihatDelay),
     startPositions: [0],
     dur: drumkitDur,
-    volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
+    volume: drumkitVolume * linlin(Math.random(), 0, 1, 0.2, 2.0),
 };
 
 function newPlayer (playerConfig) {
