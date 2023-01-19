@@ -2,8 +2,8 @@
 //
 // - [x] fix bpm
 // - [ ] add seeded random modifiers to newPlayer(); this allows to create new player values on the fly.
-// - [ ] mapejar seeds a variables
-// - [ ] all variables are either randomseeded or determined by user
+// - [x] mapejar seeds a variables
+// - [x] all variables are either randomseeded or determined by user
 // - [ ] random lead play (+ canviar filtre baix dinàmicament)
 // - [x] introduir valors delays als arrays
 // - [ ] acabar UI
