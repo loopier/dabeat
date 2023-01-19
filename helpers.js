@@ -44,6 +44,42 @@ function choosen(list, length) {
     return choice;
 }
 
+/// \brief  Returns an array of LENGTH elements, randomly chosen from LIST. Distance between
+///         chosen indices is determined by DELTA.
+/// \description
+///     This works like choosen(...) but instead of choosing elements at random it
+///     chooses them taking into account the last chosen item. Every new item is
+///     at a distance from the previous one in either direction. The distance is
+///     a random value between 1 and DELTA. The higher the DELTA, the further appart
+///     will be the next element.
+///     For example, in a list [0,1,2,3,4,5,6,7] with DELTA 0: if the first element is
+///     3, the next one will be 2 or 4. If DELTA is 2, the next element after 3 would be
+///     either 1,2,4 or 5.
+function perlinChoosen(list, length, delta) {
+    let choice = [];
+    const rnd = Math.abs(delta) + 1;
+    let index = Math.floor(linlin(Math.random(), 0,1, 0, list.length-1));
+    for( let i = 0; i < length; i++ ) {
+        choice.push(list[index]);
+        const rnd = Math.floor(linlin(Math.random(), 0,1, 0,delta)) + 1; ///< minimum is 1
+        const sign = choose([-1,1]);
+        index = Math.abs(((sign * rnd) + index) % list.length);
+        console.log("rnd", rnd);
+    }
+    return choice;
+}
+
+/// \brief  Returns an array of LENGTH with element from the list randomly chosen with a SEED
+function seedChoosen(seed, list, length){
+    let choice = [];
+    for( let i = 0; i < length; i++ ) {
+        choice.push(seedChoose(seed, list));
+    }
+
+    console.debug("choosen: %o", choice);
+    return choice;
+}
+
 /// \brief  returns a random number based on seed
 /// wrote it to simplify syntax
 function seedrand(seed) {
@@ -95,12 +131,4 @@ function printPlayer( config ) {
     console.info("%s dur:", config.name, config.player.buffer.duration);
     console.info("-----");
 
-}
-
-/// \brief  return a seeded random number
-///
-/// see ./seedrandom.min.js
-function seedrandom( seed ) {
-    let rand = new Math.seedrandom(seed);
-    return rand();
 }
