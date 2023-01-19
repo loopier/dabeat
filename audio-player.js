@@ -1,11 +1,11 @@
 // TODO:
 //
 // - [x] fix bpm
-// - [ ] add perlin noise with multiplier to chop. Multiplier modifies delta between startpoints
-// - [ ] add seeded random modifiers to newPlayer(); this allows to create new player values on the fly.
+// - [x] add perlin noise with multiplier to chop. Multiplier modifies delta between startpoints
+// - [ ] change implementation to allow dynamic variable tweeking
 // - [x] mapejar seeds a variables
 // - [x] all variables are either randomseeded or determined by user
-// - [ ] random lead play (+ canviar filtre baix dinàmicament)
+// - [x] random lead play (+ canviar filtre baix dinàmicament)
 // - [x] introduir valors delays als arrays
 // - [ ] acabar UI
 // - [x] chop AAAB son 8 o 16 beats
