@@ -2,11 +2,11 @@
 //
 // - [x] fix bpm
 // - [ ] add seeded random modifiers to newPlayer(); this allows to create new player values on the fly.
-// - [ ] random lead play (+ canviar filtre baix dinàmicament)
-// - [ ] introduir valors delays als arrays
 // - [ ] mapejar seeds a variables
-// - [ ] acabar UI
 // - [ ] all variables are either randomseeded or determined by user
+// - [ ] random lead play (+ canviar filtre baix dinàmicament)
+// - [x] introduir valors delays als arrays
+// - [ ] acabar UI
 // - [x] chop AAAB son 8 o 16 beats
 // - [x] dur rand(x,y) - legato
 // - [x] + delay de cada kit
@@ -16,14 +16,12 @@
 // random seeds
 // general random
 //
-let randseed1 = seedrandom(Math.random());
-// let randseed1 = seedrandom(1);
-// drumkit delay
-let randseed2 = seedrandom(2);
-// lead + bass || bass
-let randseed3 = seedrandom(3);
-// sample choice
-let randseed4 = seedrandom(4);
+// let seed = seedrandom(Math.random());
+let seed = Math.random();
+let rand = seedrand(seed);
+
+let cb = 0; ///< stands for "complexitat del beat": [0..5]. Affects the drumkit delays.
+let cs = 0; ///< stands for "complexitat del sample". Used to choose if lead plays or not.
 
 // sonic-pi filter frequency range mapping
 const sonicPiFilterMin = 0;
@@ -40,7 +38,7 @@ const rest = 0;
 let bpm = linlin(Math.random(), 0, 1, 86,98);
 
 // number of slices per part (A and B)
-const numSlices = seedChoose(randseed1, [8,16]);
+const numSlices = seedChoose(seed, [8,16]);
 console.debug("num slices: %d", numSlices);
 
 /// Variables holding arrays with sample file names are in dedicated files for
@@ -51,7 +49,7 @@ let baseSamplesDirectoryUrl = "samples/";
 let starterBaseUrl = baseSamplesDirectoryUrl + "starters/";
 let starterFilename = starterBaseUrl + choose(starters); // 'starters' is declared in kick-filenames.js
 let isStarterReady = false;
-let playLead = Math.round(Math.random());
+let playLead = cs; ///< see 'cs' above.
 // lead
 let leadConfig = {
     name: "lead",
@@ -62,7 +60,7 @@ let leadConfig = {
     pan : choose([-0.5,0.5]),
     delays: [0],
     startPositions: [0],
-    legato: linlin(seedrand(randseed1), 0, 1, 0.6, 0.8),
+    legato: linlin(rand, 0, 1, 0.6, 0.8),
     dur: beatDur,
     volume: 1,
     play: playLead,
@@ -88,11 +86,12 @@ let bassConfig = {
 // There are 2 types of drum delay: drumkit delay (general), and individual delay.
 // The INDIVIDUAL delay is a SEQUENCE with a size equal to that of PATTERN. Delays
 // in the same slots as 'rests' won't have any effect.
-const drumkitDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.05) + (choose([-1,1]) * randseed1 / 90);
+const drumkitDelayModifier = cb; ///< See 'cb' above.
+const drumkitDelay = linlin(rand,0 ,1 , 0, 0.05) + (choose([-1,1]) * drumkitDelayModifier / 90);
 const drumkitVolume = 1.1;
 const drumkitDur = beatDur;
 // kick
-const kickDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.087) + (choose([-1,1]) * randseed1 / 30);
+const kickDelay = linlin(rand,0 ,1 , 0, 0.087) + (choose([-1,1]) * drumkitDelayModifier / 30);
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickConfig = {
     name: "kick",
@@ -105,7 +104,7 @@ let kickConfig = {
     volume: drumkitVolume * linlin(Math.random(), 0, 1, 1.8, 2.0),
 };
 // snare
-const snareDelay = linlin(seedrand(randseed1),0 ,1 , 0, 0.076) + (choose([-1.5,1.5]) * randseed1 / 30);
+const snareDelay = linlin(rand,0 ,1 , 0, 0.076) + (choose([-1.5,1.5]) * drumkitDelayModifier / 30);
 let snareBaseUrl = baseSamplesDirectoryUrl + "ab-snares-snaps-claps/";
 let snareConfig = {
     name: "snare",
@@ -118,7 +117,7 @@ let snareConfig = {
 };
 console.debug(snareConfig.pattern);
 // hats
-const hihatDelay = linlin(seedrand(randseed1), 0, 1, -0.01, 0.05 + 0.005 * randseed1);
+const hihatDelay = linlin(rand, 0, 1, -0.01, 0.05 + 0.005 * drumkitDelayModifier);
 let hihatBaseUrl = baseSamplesDirectoryUrl + "ab-hats/";
 let hihatConfig = {
     name: "hihat",
