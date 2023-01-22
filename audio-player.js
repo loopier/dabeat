@@ -34,7 +34,7 @@ const beatDur = "8n";
 const numSteps = 8;
 const rest = 0;
 // tempo
-let bpm = linlin(rand, 0, 1, 86,98);
+let bpm;
 
 // number of slices per part (A and B)
 let numSlices = seedChoose(seed, [8,16]);
@@ -46,12 +46,10 @@ let baseSamplesDirectoryUrl = "samples/";
 
 // starters
 let starterBaseUrl = baseSamplesDirectoryUrl + "starters/";
-let starterFilename = starterBaseUrl + seedChoose(seed, starters); // 'starters' is declared in kick-filenames.js
+let starterFilename;
 let isStarterReady = false;
-let playLead = cs % 2; ///< see 'cs' above.
-// lead
+let playLead;
 let leadConfig = {};
-// bass
 let bassConfig = {};
 
 // drumkit
@@ -208,6 +206,7 @@ function loop (config) {
 }
 
 function systemSetup() {
+    bpm = linlin(rand, 0, 1, 86,98);
     rand = seedrand(seed);
 
     starterFilename = starterBaseUrl + seedChoose(seed, starters);
