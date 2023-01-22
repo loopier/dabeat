@@ -50,36 +50,9 @@ let starterFilename = starterBaseUrl + seedChoose(seed, starters); // 'starters'
 let isStarterReady = false;
 let playLead = cs % 2; ///< see 'cs' above.
 // lead
-let leadConfig = {
-    name: "lead",
-    filename: starterFilename,
-    filter : "highpass",
-    rate: 2,
-    cutoff : linexp(linlin(rand, 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
-    pan : seedChoose(seed, [-0.5,0.5]),
-    delays: [0],
-    startPositions: [0],
-    startPositionsDelta: cs, ///< determines if the startpositions are contiguous or far appart
-    legato: linlin(rand, 0, 1, 0.6, 0.8),
-    dur: beatDur,
-    volume: 1,
-    play: playLead,
-};
+let leadConfig = {};
 // bass
-let bassConfig = {
-    name: "bass",
-    filename: starterFilename,
-    filter : "lowpass",
-    rate: 1,
-    // set cutoff to a higher value if lead is not playing
-    cutoff : linexp(playLead? 80:100, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
-    pan : linlin(rand, 0,1, -0.09, 0),
-    delays: [0],
-    startPositions: [0],
-    startPositionsDelta: cs, ///< determines if the startpositions are contiguous or far appart
-    dur: beatDur ,
-    volume: 1,
-};
+let bassConfig = {};
 
 // drumkit
 //
@@ -87,48 +60,28 @@ let bassConfig = {
 // There are 2 types of drum delay: drumkit delay (general), and individual delay.
 // The INDIVIDUAL delay is a SEQUENCE with a size equal to that of PATTERN. Delays
 // in the same slots as 'rests' won't have any effect.
-let drumkitDelayModifier = cb; ///< See 'cb' above.
-let drumkitDelay = linlin(rand,0 ,1 , 0, 0.05) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 90);
+let drumkitDelayModifier;
+let drumkitDelay;
 let drumkitVolume = 1.1;
 let drumkitDur = beatDur;
 // kick
-let kickDelay = linlin(rand,0 ,1 , 0, 0.087) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 30);
+let kickPattern = [1,0,1,0, 1,0,1,0]; // playing probability - 1=always; 0=never; 0.5=50%
+let kickDelays =  [0,-0.07,-0.35,0.39,1.09,-0.08,-0.11,0.39];
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
-let kickConfig = {
-    name: "kick",
-    filename: kickBaseUrl + seedChoose(seed, kicks), // 'kicks' is declared in kick-filenames.js
-    pattern : [1,0,1,0, 1,0,1,0], // playing probability - 1=always; 0=never; 0.5=50%
-    //delays :  [0,0.93,0.72,0.74,1.7,0.83,0.97,0.5].map(x => x + drumkitDelay + kickDelay)
-    delays :  [0,-0.07,-0.35,0.39,1.09,-0.08,-0.11,0.39].map(x => x + drumkitDelay + kickDelay),
-    startPositions: [0],
-    dur: drumkitDur,
-    volume: drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0),
-};
+let kickDelay;
+let kickConfig = {};
 // snare
-let snareDelay = linlin(rand,0 ,1 , 0, 0.076) + (seedChoose(seed, [-1.5,1.5]) * drumkitDelayModifier / 30);
+let snarePattern = [0,0,1,0,0,0,1,0.1]; // playing probability - 1=always; 0=never; 0.5=50%
+let snareDelays =  [0,0,0.02,0,0,0,0,-0.15];
 let snareBaseUrl = baseSamplesDirectoryUrl + "ab-snares-snaps-claps/";
-let snareConfig = {
-    name: "snare",
-    filename: snareBaseUrl + seedChoose(seed, snares), // 'kicks' is declared in kick-filenames.js
-    pattern : [0,0,1,0,0,0,1,0.1], // playing probability - 1=always; 0=never; 0.5=50%
-    delays :  [0,0,0.02,0,0,0,0,-0.15].map(x => x + drumkitDelay + snareDelay),
-    startPositions: [0],
-    dur: drumkitDur,
-    volume: drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0),
-};
-console.debug(snareConfig.pattern);
+let snareDelay;
+let snareConfig = {};
 // hats
-let hihatDelay = linlin(rand, 0, 1, -0.01, 0.05 + 0.005 * drumkitDelayModifier);
+let hihatPattern = [0.933,1,1,1,1,1,1,0.833]; // playing probability - 1=always; 0=never; 0.5=50%
+let hihatDelays = [0,0.02,0,0.02,0,0.02,0,0.02];
 let hihatBaseUrl = baseSamplesDirectoryUrl + "ab-hats/";
-let hihatConfig = {
-    name: "hihat",
-    filename: hihatBaseUrl + seedChoose(seed, hats), // 'kicks' is declared in kick-filenames.js
-    pattern : [0.933,1,1,1,1,1,1,0.833], // playing probability - 1=always; 0=never; 0.5=50%
-    delays : [0,0.02,0,0.02,0,0.02,0,0.02].map(x => x + drumkitDelay + hihatDelay),
-    startPositions: [0],
-    dur: drumkitDur,
-    volume: drumkitVolume * linlin(rand, 0, 1, 0.2, 2.0),
-};
+let hihatDelay;
+let hihatConfig = {};
 
 function newPlayer (playerConfig) {
     const buf = new Tone.ToneAudioBuffer(playerConfig.filename, () => {
@@ -254,14 +207,83 @@ function loop (config) {
     return;
 }
 
+function systemSetup() {
+    rand = seedrand(seed);
+
+    starterFilename = starterBaseUrl + seedChoose(seed, starters);
+    playLead = cs % 2;
+    leadConfig = {
+        name: "lead",
+        filename: starterFilename,
+        filter : "highpass",
+        rate: 2,
+        cutoff : linexp(linlin(rand, 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
+        pan : seedChoose(seed, [-0.5,0.5]),
+        delays: [0],
+        startPositions: [0],
+        startPositionsDelta: cs, ///< determines if the startpositions are contiguous or far appart
+        legato: linlin(rand, 0, 1, 0.6, 0.8),
+        dur: beatDur,
+        volume: 1,
+        play: playLead,
+    };
+    bassConfig = {
+        name: "bass",
+        filename: starterFilename,
+        filter : "lowpass",
+        rate: 1,
+        // set cutoff to a higher value if lead is not playing
+        cutoff : linexp(playLead? 80:100, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
+        pan : linlin(rand, 0,1, -0.09, 0),
+        delays: [0],
+        startPositions: [0],
+        startPositionsDelta: cs, ///< determines if the startpositions are contiguous or far appart
+        dur: beatDur ,
+        volume: 1,
+    };
+
+    drumkitDelayModifier = cb;
+    drumkitDelay = linlin(rand,0 ,1 , 0, 0.05) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 90);
+
+    kickDelay = linlin(rand,0 ,1 , 0, 0.087) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 30);
+    kickConfig = {
+        name: "kick",
+        filename: kickBaseUrl + seedChoose(seed, kicks), // 'kicks' is declared in kick-filenames.js
+        pattern : kickPattern,
+        delays: kickDelays.map(x => x + drumkitDelay + kickDelay),
+        startPositions: [0],
+        dur: drumkitDur,
+        volume: drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0),
+    };
+    snareDelay = linlin(rand,0 ,1 , 0, 0.076) + (seedChoose(seed, [-1.5,1.5]) * drumkitDelayModifier / 30);
+    snareConfig = {
+        name: "snare",
+        filename: snareBaseUrl + seedChoose(seed, snares), // 'snares' is declared snares-filenames.js
+        pattern : snarePattern,
+        delays : snareDelays.map(x => x + drumkitDelay + snareDelay),
+        startPositions: [0],
+        dur: drumkitDur,
+        volume: drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0),
+    };
+    hihatDelay = linlin(rand, 0, 1, -0.01, 0.05 + 0.005 * drumkitDelayModifier);
+    hihatConfig = {
+        name: "hihat",
+        filename: hihatBaseUrl + seedChoose(seed, hats), // 'hats' is declared in hats-filenames.js
+        pattern : hihatPattern,
+        delays : hihatDelays.map(x => x + drumkitDelay + hihatDelay),
+        startPositions: [0],
+        dur: drumkitDur,
+        volume: drumkitVolume * linlin(rand, 0, 1, 0.2, 2.0),
+    };
+}
+
 /// \brief  play the thing.
 ///
 /// This is the main object playing the samples with their assigned delays.
 function play() {
     // prevent overdub
     stop();
-
-    starterFilename = starterBaseUrl + seedChoose(seed, starters); // 'starters' is declared in kick-filenames.js
+    systemSetup();
 
     bassConfig.player = newPlayer(bassConfig);
     leadConfig.player = newPlayer(leadConfig);
@@ -281,10 +303,10 @@ function play() {
 function stop() {
     if( Tone.Transport.state != "started") return;
     Tone.Transport.stop();
-    bassConfig.player.dispose();
-    leadConfig.player.dispose();
-    kickConfig.player.dispose();
-    snareConfig.player.dispose();
-    hihatConfig.player.dispose();
+    // bassConfig.player.dispose();
+    // leadConfig.player.dispose();
+    // kickConfig.player.dispose();
+    // snareConfig.player.dispose();
+    // hihatConfig.player.dispose();
 }
 
