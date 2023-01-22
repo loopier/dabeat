@@ -200,7 +200,14 @@ function loop (config) {
             accumulatedTime = 0;
         }
 
-    }, loopInterval).start();
+    }, loopInterval);
+
+    // loop.start();
+
+    if( config.loop == undefined ) {
+        config.loop = loop;
+        config.loop.start();
+    }
 
     return;
 }
@@ -211,69 +218,63 @@ function systemSetup() {
 
     starterFilename = starterBaseUrl + seedChoose(seed, starters);
     playLead = cs % 2;
-    leadConfig = {
-        name: "lead",
-        filename: starterFilename,
-        filter : "highpass",
-        rate: 2,
-        cutoff : linexp(linlin(rand, 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
-        pan : seedChoose(seed, [-0.5,0.5]),
-        delays: [0],
-        startPositions: [0],
-        startPositionsDelta: cs, ///< determines if the startpositions are contiguous or far appart
-        legato: linlin(rand, 0, 1, 0.6, 0.8),
-        dur: beatDur,
-        volume: 1,
-        play: playLead,
-    };
-    bassConfig = {
-        name: "bass",
-        filename: starterFilename,
-        filter : "lowpass",
-        rate: 1,
-        // set cutoff to a higher value if lead is not playing
-        cutoff : linexp(playLead? 80:100, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax),
-        pan : linlin(rand, 0,1, -0.09, 0),
-        delays: [0],
-        startPositions: [0],
-        startPositionsDelta: cs, ///< determines if the startpositions are contiguous or far appart
-        dur: beatDur ,
-        volume: 1,
-    };
+
+    leadConfig.name = "lead";
+    leadConfig.filename = starterFilename;
+    leadConfig.filter  = "highpass";
+    leadConfig.rate = 2;
+    leadConfig.cutoff = linexp(linlin(rand, 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
+    leadConfig.pan = seedChoose(seed, [-0.5,0.5]);
+    leadConfig.delays = [0];
+    leadConfig.startPositions = [0];
+    leadConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
+    leadConfig.legato = linlin(rand, 0, 1, 0.6, 0.8);
+    leadConfig.dur = beatDur;
+    leadConfig.volume = 1;
+    leadConfig.play = playLead;
+
+    bassConfig.name = "bass";
+    bassConfig.filename = starterFilename;
+    bassConfig.filter  = "lowpass";
+    bassConfig.rate = 1;
+    // set cutoff to a higher value if lead is not playing
+    bassConfig.cutoff  = linexp(playLead? 80:100, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
+    bassConfig.pan  = linlin(rand, 0,1, -0.09, 0);
+    bassConfig.delays = [0];
+    bassConfig.startPositions = [0];
+    bassConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
+    bassConfig.dur = beatDur ;
+    bassConfig.volume = 1;
 
     drumkitDelayModifier = cb;
     drumkitDelay = linlin(rand,0 ,1 , 0, 0.05) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 90);
 
     kickDelay = linlin(rand,0 ,1 , 0, 0.087) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 30);
-    kickConfig = {
-        name: "kick",
-        filename: kickBaseUrl + seedChoose(seed, kicks), // 'kicks' is declared in kick-filenames.js
-        pattern : kickPattern,
-        delays: kickDelays.map(x => x + drumkitDelay + kickDelay),
-        startPositions: [0],
-        dur: drumkitDur,
-        volume: drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0),
-    };
+    kickConfig.name = "kick";
+    kickConfig.filename = kickBaseUrl + seedChoose(seed, kicks); // 'kicks' is declared in kick-filenames.js
+    kickConfig.pattern  = kickPattern;
+    kickConfig.delays = kickDelays.map(x => x + drumkitDelay + kickDelay);
+    kickConfig.startPositions = [0];
+    kickConfig.dur = drumkitDur;
+    kickConfig.volume = drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0);
+
     snareDelay = linlin(rand,0 ,1 , 0, 0.076) + (seedChoose(seed, [-1.5,1.5]) * drumkitDelayModifier / 30);
-    snareConfig = {
-        name: "snare",
-        filename: snareBaseUrl + seedChoose(seed, snares), // 'snares' is declared snares-filenames.js
-        pattern : snarePattern,
-        delays : snareDelays.map(x => x + drumkitDelay + snareDelay),
-        startPositions: [0],
-        dur: drumkitDur,
-        volume: drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0),
-    };
+    snareConfig.name = "snare";
+    snareConfig.filename = snareBaseUrl + seedChoose(seed, snares); // 'snares' is declared snares-filenames.js
+    snareConfig.pattern  = snarePattern;
+    snareConfig.delays  = snareDelays.map(x => x + drumkitDelay + snareDelay);
+    snareConfig.startPositions = [0];
+    snareConfig.dur = drumkitDur;
+    snareConfig.volume = drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0);
+
     hihatDelay = linlin(rand, 0, 1, -0.01, 0.05 + 0.005 * drumkitDelayModifier);
-    hihatConfig = {
-        name: "hihat",
-        filename: hihatBaseUrl + seedChoose(seed, hats), // 'hats' is declared in hats-filenames.js
-        pattern : hihatPattern,
-        delays : hihatDelays.map(x => x + drumkitDelay + hihatDelay),
-        startPositions: [0],
-        dur: drumkitDur,
-        volume: drumkitVolume * linlin(rand, 0, 1, 0.2, 2.0),
-    };
+    hihatConfig.name = "hihat";
+    hihatConfig.filename = hihatBaseUrl + seedChoose(seed, hats); // 'hats' is declared in hats-filenames.js
+    hihatConfig.pattern = hihatPattern;
+    hihatConfig.delays = hihatDelays.map(x => x + drumkitDelay + hihatDelay);
+    hihatConfig.startPositions = [0];
+    hihatConfig.dur = drumkitDur;
+    hihatConfig.volume = drumkitVolume * linlin(rand, 0, 1, 0.2, 2.0);
 }
 
 /// \brief  play the thing.
