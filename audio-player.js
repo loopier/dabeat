@@ -2,7 +2,7 @@
 //
 // - [x] fix bpm
 // - [x] add perlin noise with multiplier to chop. Multiplier modifies delta between startpoints
-// - [ ] change implementation to allow dynamic variable tweeking
+// - [x] change implementation to allow dynamic variable tweeking
 // - [x] mapejar seeds a variables
 // - [x] all variables are either randomseeded or determined by user
 // - [x] random lead play (+ canviar filtre baix dinàmicament)
