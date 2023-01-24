@@ -6,7 +6,7 @@ const kicks = [
     "cave-kick.wav",
     "cheetos-kick.wav",
     "classy-kick.wav",
-    "clubknock-kick---1.wav",
+    "clubknock-kick-1.wav",
     "clubknock-kick.wav",
     "cream-kick.wav",
     "dough-kick.wav",
