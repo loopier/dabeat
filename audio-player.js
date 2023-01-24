@@ -17,7 +17,7 @@
 // let seed = Math.random(); ///< testing variable
 let seed = 1;
 
-let cb = 0; ///< stands for "complexitat del beat": [0..5]. Affects the drumkit delays.
+let cb = 2; ///< stands for "complexitat del beat": [0..5]. Affects the drumkit delays.
 let cs = 1; ///< stands for "complexitat del sample". Used to choose if lead plays or not.
 
 // general random
@@ -51,6 +51,13 @@ let isStarterReady = false;
 let playLead;
 let leadConfig = {};
 let bassConfig = {};
+
+//Lead voice
+let lyricsBaseUrl = baseSamplesDirectoryUrl + "veus/";
+let lyricsFilename;
+let lyricsConfig = {};
+
+
 
 // drumkit
 //
@@ -176,7 +183,7 @@ function loop (config) {
                   
             // subtracting the previous delay from the previous step
             loopInterval = loopInterval - delay;
-            delay = loopInterval * config.delays[ step % config.delays.length ];
+  https://github.com/dgduncan/SevenSegment          delay = loopInterval * config.delays[ step % config.delays.length ];
             loopInterval = loopInterval + delay;
             const startPoint = config.startPositions[ step % config.startPositions.length ];
             const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
@@ -246,6 +253,21 @@ function systemSetup() {
     bassConfig.dur = beatDur ;
     bassConfig.volume = 1;
 
+    lyricsFilename = lyricsBaseUrl + seedChoose(seed, lyrics); //lyrics is declared in lyrics-filenames.js
+    //lyricsFilename = lyricsBaseUrl + choose(lyrics);
+    lyricsConfig.name = "leadVoice";
+    lyricsConfig.filename = lyricsFilename; //"samples/veus/kaseoyemen.wav"//
+    lyricsConfig.rate = 1;
+    lyricsConfig.pan = seedChoose(seed, [-0.5,0.5]);
+    lyricsConfig.delays = [0];
+    lyricsConfig.pattern = [1];
+    lyricsConfig.startPositions = [0];
+    lyricsConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
+    lyricsConfig.legato = linlin(rand, 0, 1, 0.6, 0.8);
+    lyricsConfig.dur = beatDur;
+    lyricsConfig.volume = 1;
+   
+
     drumkitDelayModifier = cb;
     drumkitDelay = linlin(rand,0 ,1 , 0, 0.05) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 90);
 
@@ -290,6 +312,7 @@ function play() {
     kickConfig.player = newPlayer(kickConfig);
     snareConfig.player = newPlayer(snareConfig);
     hihatConfig.player = newPlayer(hihatConfig);
+    lyricsConfig.player = newPlayer(lyricsConfig);
 
     Tone.Transport.start("+1", "0:0:0");
     // FIX: bad hack. Couldn't find a better way to set the tempo...
