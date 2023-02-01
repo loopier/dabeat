@@ -15,20 +15,20 @@ document.querySelector('button#stop')?.addEventListener('click',  () => {
 //     // sample();
 // });
 
-// document.querySelector('input#seed1')?.addEventListener('input',  (event) => {
-//     let value = event.target.value;
-//     seedrand1 = seedrand(value);
-// });
+document.querySelector('input#seed1')?.addEventListener('input',  (event) => {
+    let value = event.target.value;
+    seedrand1 = seedrand(value);
+});
 
-// document.querySelector('input#seed2')?.addEventListener('input',  (event) => {
-//     let value = event.target.value;
-//     seedrands = seedrand(value);
-// });
+document.querySelector('input#cb')?.addEventListener('input',  (event) => {
+    let value = event.target.value;
+    seedrands = seedrand(value);
+});
 
-// document.querySelector('input#seed3')?.addEventListener('input',  (event) => {
-//     let value = event.target.value;
-//     seedrand3 = seedrand(value);
-// });
+document.querySelector('input#cs')?.addEventListener('input',  (event) => {
+    let value = event.target.value;
+    seedrand3 = seedrand(value);
+});
 
 // document.querySelector('input#leadon')?.addEventListener('input',  (event) => {
 //     let value = event.target.checked;
