@@ -4,21 +4,30 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.48/Tone.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
-<script language="javascript" type="text/javascript" src="libraries/p5.min.js"></script>
+<!-- <script language="javascript" type="text/javascript" src="libraries/p5.min.js"></script>
 <script language="javascript" type="text/javascript" src="libraries/knobMaker.js"></script>
-<script language="javascript" type="text/javascript" src="libraries/p5.clickable.js"></script>
+<script language="javascript" type="text/javascript" src="libraries/p5.clickable.js"></script> -->
 <!-- <style> body { padding: 20; margin: 0; background: #111; }  #defaultCanvas0 { display: block; margin: auto; } </style> -->
 </head>
 <body>
 <link rel="stylesheet" href=" style.css"/>
 <!-- file <input type='file' id='fileinput' value=0 /><br> -->
+<label for="seed1">Escriu un n&uacute;mero de 0 a 9999</label>
+<input class="userInput" type='number' id='seed1' value=1 min="0" max="10000"/><br> <br>
+
+<label for="cb">Escriu el valor de la complexitat del beat (d'1 a 5)</label>
+<input class="userInput" type='number' id='cb' value=1 min="0" max="5"/><br><br>
+
+<label for="cs">Escriu el valor de la complexitat del sample (d'1 a 5)</label>
+<input class="userInput" type='number' id='cs' value=1 min="0" max="5" /> <br><br>
+
+&nbsp;&nbsp;&nbsp;&nbsp; 
 <button id='start' autofocus>start</button>
+&nbsp;&nbsp;&nbsp;&nbsp;
 <button id='stop' autofocus>stop</button><br>
 <!-- file <input type='file' id='fileinput' value=0 multiple /><br> -->
 <!-- slices <input type='text' id='slices' value=0 label='slices' /><br> -->
-<input type='text' id='seed1' value=0 /><br> 
-<input type='text' id='cb' value=0 /><br>
-<input type='text' id='cs' value=0 /><br>
+
 <!-- play lead <input type='checkbox' id='leadon' value=0 /><br> -->
 <!-- <script type="text/javascript" src="dabeat.js"></script> -->
 <script src="seedrandom.min.js"></script>
