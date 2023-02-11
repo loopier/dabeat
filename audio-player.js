@@ -346,9 +346,10 @@ function play() {
 function stop() {
     if( Tone.Transport.state != "started") return;
     Tone.Transport.stop();
-    // bassConfig.player.dispose();
-    // leadConfig.player.dispose();
-    // kickConfig.player.dispose();
-    // snareConfig.player.dispose();
-    // hihatConfig.player.dispose();
+    bassConfig.player.stop();
+    leadConfig.player.stop();
+    kickConfig.player.stop();
+    snareConfig.player.stop();
+    hihatConfig.player.stop();
+    lyricsConfig.player.stop();
 }
