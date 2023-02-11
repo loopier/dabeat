@@ -15,10 +15,10 @@
 
 // global vars
 // let seed = Math.random(); ///< testing variable
-let seed = 2;
+let seed;
 
-let cb = 2; ///< stands for "complexitat del beat": [0..5]. Affects the drumkit delays.
-let cs = 1; ///< stands for "complexitat del sample". Used to choose if lead plays or not.
+let cb; ///< stands for "complexitat del beat": [0..5]. Affects the drumkit delays.
+let cs; ///< stands for "complexitat del sample". Used to choose if lead plays or not.
 
 // general random
 let rand = seedrand(seed);
