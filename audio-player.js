@@ -15,7 +15,7 @@
 
 // global vars
 // let seed = Math.random(); ///< testing variable
-let seed = 1;
+let seed = 2;
 
 let cb = 2; ///< stands for "complexitat del beat": [0..5]. Affects the drumkit delays.
 let cs = 1; ///< stands for "complexitat del sample". Used to choose if lead plays or not.
@@ -54,6 +54,7 @@ let bassConfig = {};
 
 //Lead voice
 let lyricsBaseUrl = baseSamplesDirectoryUrl + "veus/";
+// let lyricsBaseUrl = baseSamplesDirectoryUrl + "starters/";
 let lyricsFilename;
 let lyricsConfig = {};
 
@@ -96,14 +97,14 @@ function newPlayer (playerConfig) {
     let player = new Tone.Player(buf, () => {
         console.info("%s sample ready: %s", playerConfig.name, playerConfig.filename);
         console.info("player name:", playerConfig.name);
-        if( playerConfig.name == "bass" || playerConfig.name == "lead" ) {
+        if( playerConfig.name == "bass" || playerConfig.name == "lead" || playerConfig.name == "lyrics") {
             console.debug("buffer duration:", buf.duration);
             // stretch to match bpm
             const numMeasures = 64;
             // const stretchRatio = ...;
             // chop in 4 beats per measure
             const numBeats = 4 * numMeasures;
-            const chunks = chop(buf.duration, numBeats);
+            const chunks = playerConfig.name == "lyrics" ? [0] : chop(buf.duration, numBeats);
             // const partA = choosen(chunks, numSlices);
             // const partB = choosen(chunks, numSlices);
             const partA = perlinChoosen(chunks, numSlices, playerConfig.startPositionsDelta);
@@ -114,7 +115,7 @@ function newPlayer (playerConfig) {
             playerConfig.pattern.length = playerConfig.startPositions.length;
             playerConfig.pattern.fill(1);
             // playerConfig.rate = sampleStretchRatioAccordingToPau( buf.duration, bpm ) * (playerConfig.name == "bass"? 1 : 2);
-            playerConfig.rate = sampleStretchRatio( buf.duration, bpm ) * (playerConfig.name == "bass"? 1 : 2);
+            playerConfig.rate = sampleStretchRatio( buf.duration, bpm ) * (playerConfig.name == "lead"? 2 : 1);
 
             console.debug("parts:\n%o\n%o", partA, partB);
             console.debug("%s startpositions: %o", playerConfig.name, playerConfig.startPositions);
@@ -167,8 +168,8 @@ function loop (config) {
     let step = 0;
     let delay = 0;
     let accumulatedTime = 0;
-    let loopInterval = Tone.Time(config.dur).toSeconds(); 
-    
+    let loopInterval = Tone.Time(config.dur).toSeconds();
+
     if( config.name == "lead" && (config.play == false || config.play == undefined)) {
         console.debug("don't play lead");
         return;
@@ -180,10 +181,10 @@ function loop (config) {
         if( gate != rest && gate > rand ) {
             const name = config.name;
             const player = config.player;
-                  
+
             // subtracting the previous delay from the previous step
             loopInterval = loopInterval - delay;
-  https://github.com/dgduncan/SevenSegment          delay = loopInterval * config.delays[ step % config.delays.length ];
+            delay = loopInterval * config.delays[ step % config.delays.length ];
             loopInterval = loopInterval + delay;
             const startPoint = config.startPositions[ step % config.startPositions.length ];
             const volume = linexp(config.volume ? config.volume : 1 , 0, 1, -80, -0.001);
@@ -197,6 +198,7 @@ function loop (config) {
             // console.debug("name: %s, interval: %s, dur: %s", config.name, loopInterval, config.dur);
         }
 
+        // step = (step + 1) % (config.pattern ? config.pattern.length : 1);
         step = (step + 1) % config.pattern.length;
 
         accumulatedTime += 1;
@@ -254,19 +256,37 @@ function systemSetup() {
     bassConfig.volume = 1;
 
     lyricsFilename = lyricsBaseUrl + seedChoose(seed, lyrics); //lyrics is declared in lyrics-filenames.js
-    //lyricsFilename = lyricsBaseUrl + choose(lyrics);
-    lyricsConfig.name = "leadVoice";
+    // lyricsFilename = lyricsBaseUrl + "kaseoyemen.wav";
+    lyricsConfig.name = "lyrics";
     lyricsConfig.filename = lyricsFilename; //"samples/veus/kaseoyemen.wav"//
     lyricsConfig.rate = 1;
+    // lyricsConfig.filter  = "lowpass";
+    // lyricsConfig.cutoff = linexp(linlin(rand, 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
     lyricsConfig.pan = seedChoose(seed, [-0.5,0.5]);
     lyricsConfig.delays = [0];
-    lyricsConfig.pattern = [1];
     lyricsConfig.startPositions = [0];
     lyricsConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
     lyricsConfig.legato = linlin(rand, 0, 1, 0.6, 0.8);
-    lyricsConfig.dur = beatDur;
-    lyricsConfig.volume = 1;
-   
+    lyricsConfig.legato = 1;
+
+    // TODO: modify duration
+    // lyricsConfig.dur = Tone.Time(Tone.Time(beatDur) * 32).toNotation();
+
+    // lyricsConfig.volume = 1;
+
+    // lyricsConfig.name = "lyrics";
+    // lyricsConfig.filename = starterFilename;
+    // lyricsConfig.filter  = "lowpass";
+    // lyricsConfig.rate = 1;
+    // // set cutoff to a higher value if lead is not playing
+    // lyricsConfig.cutoff  = linexp(playLead? 80:100, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
+    // lyricsConfig.pan  = linlin(rand, 0,1, -0.09, 0);
+    // lyricsConfig.delays = [0];
+    // lyricsConfig.startPositions = [0];
+    // lyricsConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
+    lyricsConfig.dur = "32m";
+    // lyricsConfig.volume = 1;
+
 
     drumkitDelayModifier = cb;
     drumkitDelay = linlin(rand,0 ,1 , 0, 0.05) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 90);
@@ -332,4 +352,3 @@ function stop() {
     // snareConfig.player.dispose();
     // hihatConfig.player.dispose();
 }
-
