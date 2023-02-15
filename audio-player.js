@@ -7,7 +7,7 @@
 // - [x] all variables are either randomseeded or determined by user
 // - [x] random lead play (+ canviar filtre baix dinàmicament)
 // - [x] introduir valors delays als arrays
-// - [ ] acabar UI
+// - [x] acabar UI
 // - [x] chop AAAB son 8 o 16 beats
 // - [x] dur rand(x,y) - legato
 // - [x] + delay de cada kit
@@ -237,8 +237,9 @@ function systemSetup() {
     leadConfig.delays = [0];
     leadConfig.startPositions = [0];
     leadConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
-    leadConfig.legato = linlin(rand, 0, 1, 0.6, 0.8);
-    leadConfig.dur = beatDur;
+    leadConfig.legato = linlin(rand, 0, 1, 0.98, 0.99);
+    // leadConfig.dur = beatDur;
+    leadConfig.dur = "4n";
     leadConfig.volume = 1;
     leadConfig.play = playLead;
 
@@ -252,6 +253,7 @@ function systemSetup() {
     bassConfig.delays = [0];
     bassConfig.startPositions = [0];
     bassConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
+    bassConfig.legato = linlin(rand, 0, 1, 0.97, 0.99);
     bassConfig.dur = beatDur ;
     bassConfig.volume = 1;
 
