@@ -1,10 +1,16 @@
-// global vars
+////////////////////////////////////////////////////////////////////////////////
+//  global vars
+////////////////////////////////////////////////////////////////////////////////
+
 // let seed = Math.random(); ///< testing variable
 let seed = 1;
 
 let cb = 0; ///< stands for "complexitat del beat": [0..5]. Affects the drumkit delays.
 let cs = 1; ///< stands for "complexitat del sample". Used to choose if lead plays or not.
 
+////////////////////////////////////////////////////////////////////////////////
+//  global system vars -- Do not edit unless you know what you're doing.
+////////////////////////////////////////////////////////////////////////////////
 // general random
 let rand = seedrand(seed);
 // sonic-pi filter frequency range mapping
@@ -40,18 +46,17 @@ let bassConfig = {};
 //Lead voice
 let lyricsBaseUrl = baseSamplesDirectoryUrl + "veus/";
 // let lyricsBaseUrl = baseSamplesDirectoryUrl + "starters/";
-let lyricsFilename;
 let lyricsConfig = {};
 
-
-
-// drumkit
+////////////////////////////////////////////////////////////////////////////////
+//  drumkit fixed values
 //
 // WARNING!:
 // There are 3 types of drum delay: general drumkit delay, individual kit
 // delay, and constant delay.
 // The INDIVIDUAL delay is a SEQUENCE with a size equal to that of PATTERN. Delays
 // in the same slots as 'rests' won't have any effect.
+////////////////////////////////////////////////////////////////////////////////
 let drumkitDelayModifier;
 let drumkitDelay;
 let drumkitVolume = 1.1;
@@ -79,10 +84,13 @@ let hihatDelay;
 let hihatConstDelay = cb * 2 * linlin(Math.random(), 0.0, 1.0, -0.02, 0.02)// 'x' in Sonic Pi;
 let hihatConfig = {};
 
+////////////////////////////////////////////////////////////////////////////////
 // Setup dynamic configs for different parts.
+//
 // They need to be here because they need to be recalculated whenever de random seed is renewed.
 // If they where setup as global variables they would only be calculated at load-time.
-function systemSetup() {
+////////////////////////////////////////////////////////////////////////////////
+function update() {
     bpm = linlin(rand, 0, 1, 86,98);
     rand = seedrand(seed);
 
@@ -117,10 +125,8 @@ function systemSetup() {
     bassConfig.dur = beatDur ;
     bassConfig.volume = 1;
 
-    lyricsFilename = lyricsBaseUrl + seedChoose(seed, lyrics); //lyrics is declared in lyrics-filenames.js
-    // lyricsFilename = lyricsBaseUrl + "kaseoyemen.wav";
     lyricsConfig.name = "lyrics";
-    lyricsConfig.filename = lyricsFilename; //"samples/veus/kaseoyemen.wav"//
+    lyricsConfig.filename = lyricsBaseUrl + seedChoose(seed, lyrics);
     lyricsConfig.rate = 1;
     // lyricsConfig.filter  = "lowpass";
     // lyricsConfig.cutoff = linexp(linlin(rand, 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
@@ -166,6 +172,11 @@ function systemSetup() {
     hihatConfig.volume = drumkitVolume * linlin(rand, 0, 1, 0.2, 1.0);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// The rest is noise
+//
+// The rest of the code sets up the samplers and sound chain, managing playback.
+////////////////////////////////////////////////////////////////////////////////
 function newPlayer (playerConfig) {
     const buf = new Tone.ToneAudioBuffer(playerConfig.filename, () => {
         console.info("bufer loaded:", playerConfig.filename);
@@ -301,7 +312,7 @@ function loop (config) {
 function play() {
     // prevent overdub
     stop();
-    systemSetup();
+    update();
 
     bassConfig.player = newPlayer(bassConfig);
     leadConfig.player = newPlayer(leadConfig);
