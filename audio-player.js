@@ -67,21 +67,18 @@ let kickDelays =  [0,-0.07,-0.35,0.39,1.09,-0.08,-0.11,0.39];
 // let k = [...];
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickDelay;
-let kickConstDelay = cb * 2 * linlin(Math.random(), 0.0, 1.0, -0.01, 0.01); // 'k' in Sonic Pi
 let kickConfig = {};
 // snare
 let snarePattern = [0,0,1,0,0,0,1,0.1]; // playing probability - 1=always; 0=never; 0.5=50%
 let snareDelays =  [0,0,0.02,0,0,0,0,-0.15];
 let snareBaseUrl = baseSamplesDirectoryUrl + "ab-snares-snaps-claps/";
 let snareDelay;
-let snareConstDelay = cb * 3 * linlin(Math.random(), 0.0, 1.0, 0.0, 0.03); // 's' in Sonic Pi
 let snareConfig = {};
 // hats
 let hihatPattern = [0.933,1,1,1,1,1,1,0.833]; // playing probability - 1=always; 0=never; 0.5=50%
 let hihatDelays = [0,0.02,0,0.02,0,0.02,0,0.02];
 let hihatBaseUrl = baseSamplesDirectoryUrl + "ab-hats/";
 let hihatDelay;
-let hihatConstDelay = cb * 2 * linlin(Math.random(), 0.0, 1.0, -0.02, 0.02)// 'x' in Sonic Pi;
 let hihatConfig = {};
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -142,8 +139,8 @@ function update() {
 
     drumkitDelayModifier = cb;
     drumkitDelay = linlin(rand,0 ,1 , 0, 0.05) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 90);
-    let k = cb * 2 * (linlin(rand, Math.random(), 0.0, 1.0, -0.015,0.015));
 
+    let kickConstDelay = cb * 2 * linlin(Math.random(), 0.0, 1.0, -0.01, 0.01); // 'k' in Sonic Pi
     kickDelay = linlin(rand,0 ,1 , 0, 0.087) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 30);
     kickConfig.name = "kick";
     kickConfig.filename = kickBaseUrl + seedChoose(seed, kicks); // 'kicks' is declared in kick-filenames.js
@@ -153,6 +150,7 @@ function update() {
     kickConfig.dur = drumkitDur;
     kickConfig.volume = drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0);
 
+    let snareConstDelay = cb * 3 * linlin(Math.random(), 0.0, 1.0, 0.0, 0.03); // 's' in Sonic Pi
     snareDelay = linlin(rand,0 ,1 , 0, 0.076) + (seedChoose(seed, [-1.5,1.5]) * drumkitDelayModifier / 30);
     snareConfig.name = "snare";
     snareConfig.filename = snareBaseUrl + seedChoose(seed, snares); // 'snares' is declared snares-filenames.js
@@ -162,6 +160,7 @@ function update() {
     snareConfig.dur = drumkitDur;
     snareConfig.volume = drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0);
 
+    let hihatConstDelay = cb * 2 * linlin(Math.random(), 0.0, 1.0, -0.02, 0.02)// 'x' in Sonic Pi;
     hihatDelay = linlin(rand, 0, 1, -0.01, 0.05 + 0.005 * drumkitDelayModifier);
     hihatConfig.name = "hihat";
     hihatConfig.filename = hihatBaseUrl + seedChoose(seed, hats); // 'hats' is declared in hats-filenames.js

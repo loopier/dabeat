@@ -28,4 +28,4 @@ Dins del codi hi trobaràs comentaris que diuen què és cada cosa. Com a resum:
 - `.play`**No editar**. L'objecte de `Tone` que fa sonar el sample. 
 - `.dur` **No editar**. Duració del beat.
 - `.pattern` patró rítmic. Es configura amb la constant `*Pattern`. Al codi hi ha comentaris explicant com funciona: valors entre `[0-1]` que indica la probabilitat que soni en aquell beat. `0.5` és un 50% de probabilitats.
-- `.delays` **Es calcula automàticament** a martir de les constants `drumkitDelay`, `*Delay` i `*ConstDelay`. Al codi hi ha comentaris per aquestes constants.
+- `.delays` **Es calcula automàticament** a martir de les constants `drumkitDelay`, `*Delay` i la variable `*ConstDelay`, definida dins `update()`. Al codi hi ha comentaris per aquestes constants.
