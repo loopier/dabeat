@@ -1,24 +1,9 @@
-// TODO:
-//
-// - [x] fix bpm
-// - [x] add perlin noise with multiplier to chop. Multiplier modifies delta between startpoints
-// - [x] change implementation to allow dynamic variable tweeking
-// - [x] mapejar seeds a variables
-// - [x] all variables are either randomseeded or determined by user
-// - [x] random lead play (+ canviar filtre baix dinàmicament)
-// - [x] introduir valors delays als arrays
-// - [x] acabar UI
-// - [x] chop AAAB son 8 o 16 beats
-// - [x] dur rand(x,y) - legato
-// - [x] + delay de cada kit
-// - [x] conditional triggers drumkit [0.0,1.0]
-
 // global vars
 // let seed = Math.random(); ///< testing variable
-let seed;
+let seed = 1;
 
-let cb; ///< stands for "complexitat del beat": [0..5]. Affects the drumkit delays.
-let cs; ///< stands for "complexitat del sample". Used to choose if lead plays or not.
+let cb = 0; ///< stands for "complexitat del beat": [0..5]. Affects the drumkit delays.
+let cs = 1; ///< stands for "complexitat del sample". Used to choose if lead plays or not.
 
 // general random
 let rand = seedrand(seed);
@@ -63,7 +48,8 @@ let lyricsConfig = {};
 // drumkit
 //
 // WARNING!:
-// There are 2 types of drum delay: drumkit delay (general), and individual delay.
+// There are 3 types of drum delay: general drumkit delay, individual kit
+// delay, and constant delay.
 // The INDIVIDUAL delay is a SEQUENCE with a size equal to that of PATTERN. Delays
 // in the same slots as 'rests' won't have any effect.
 let drumkitDelayModifier;
@@ -73,21 +59,112 @@ let drumkitDur = beatDur;
 // kick
 let kickPattern = [1,0,1,0, 1,0,1,0]; // playing probability - 1=always; 0=never; 0.5=50%
 let kickDelays =  [0,-0.07,-0.35,0.39,1.09,-0.08,-0.11,0.39];
+// let k = [...];
 let kickBaseUrl = baseSamplesDirectoryUrl + "ab-kicks/";
 let kickDelay;
+let kickConstDelay = cb * 2 * linlin(Math.random(), 0.0, 1.0, -0.01, 0.01); // 'k' in Sonic Pi
 let kickConfig = {};
 // snare
 let snarePattern = [0,0,1,0,0,0,1,0.1]; // playing probability - 1=always; 0=never; 0.5=50%
 let snareDelays =  [0,0,0.02,0,0,0,0,-0.15];
 let snareBaseUrl = baseSamplesDirectoryUrl + "ab-snares-snaps-claps/";
 let snareDelay;
+let snareConstDelay = cb * 3 * linlin(Math.random(), 0.0, 1.0, 0.0, 0.03); // 's' in Sonic Pi
 let snareConfig = {};
 // hats
 let hihatPattern = [0.933,1,1,1,1,1,1,0.833]; // playing probability - 1=always; 0=never; 0.5=50%
 let hihatDelays = [0,0.02,0,0.02,0,0.02,0,0.02];
 let hihatBaseUrl = baseSamplesDirectoryUrl + "ab-hats/";
 let hihatDelay;
+let hihatConstDelay = cb * 2 * linlin(Math.random(), 0.0, 1.0, -0.02, 0.02)// 'x' in Sonic Pi;
 let hihatConfig = {};
+
+// Setup dynamic configs for different parts.
+// They need to be here because they need to be recalculated whenever de random seed is renewed.
+// If they where setup as global variables they would only be calculated at load-time.
+function systemSetup() {
+    bpm = linlin(rand, 0, 1, 86,98);
+    rand = seedrand(seed);
+
+    starterFilename = starterBaseUrl + seedChoose(seed, starters);
+    playLead = cs % 2;
+
+    leadConfig.name = "lead";
+    leadConfig.filename = starterFilename;
+    leadConfig.filter  = "highpass";
+    leadConfig.rate = 2;
+    leadConfig.cutoff = linexp(linlin(rand, 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
+    leadConfig.pan = seedChoose(seed, [-0.5,0.5]);
+    leadConfig.delays = [0];
+    leadConfig.startPositions = [0];
+    leadConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
+    leadConfig.legato = linlin(rand, 0, 1, 0.7, 0.9); ///< how long is the sample playing, 1 being full length
+    leadConfig.dur = beatDur;
+    leadConfig.volume = 1;
+    leadConfig.play = playLead;
+
+    bassConfig.name = "bass";
+    bassConfig.filename = starterFilename;
+    bassConfig.filter  = "lowpass";
+    bassConfig.rate = 1;
+    // set cutoff to a higher value if lead is not playing
+    bassConfig.cutoff  = linexp(playLead? 80:100, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
+    bassConfig.pan  = linlin(rand, 0,1, -0.09, 0);
+    bassConfig.delays = [0];
+    bassConfig.startPositions = [0];
+    bassConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
+    bassConfig.legato = 1; ///< how long is the sample playing, 1 being full length
+    bassConfig.dur = beatDur ;
+    bassConfig.volume = 1;
+
+    lyricsFilename = lyricsBaseUrl + seedChoose(seed, lyrics); //lyrics is declared in lyrics-filenames.js
+    // lyricsFilename = lyricsBaseUrl + "kaseoyemen.wav";
+    lyricsConfig.name = "lyrics";
+    lyricsConfig.filename = lyricsFilename; //"samples/veus/kaseoyemen.wav"//
+    lyricsConfig.rate = 1;
+    // lyricsConfig.filter  = "lowpass";
+    // lyricsConfig.cutoff = linexp(linlin(rand, 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
+    lyricsConfig.pan = seedChoose(seed, [-0.5,0.5]);
+    lyricsConfig.delays = [0];
+    lyricsConfig.startPositions = [0];
+    lyricsConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
+    // lyricsConfig.legato = linlin(rand, 0, 1, 0.6, 0.8);
+    lyricsConfig.legato = 1;
+    lyricsConfig.volume = 1;
+    lyricsConfig.dur = "32m";
+
+
+    drumkitDelayModifier = cb;
+    drumkitDelay = linlin(rand,0 ,1 , 0, 0.05) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 90);
+    let k = cb * 2 * (linlin(rand, Math.random(), 0.0, 1.0, -0.015,0.015));
+
+    kickDelay = linlin(rand,0 ,1 , 0, 0.087) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 30);
+    kickConfig.name = "kick";
+    kickConfig.filename = kickBaseUrl + seedChoose(seed, kicks); // 'kicks' is declared in kick-filenames.js
+    kickConfig.pattern  = kickPattern;
+    kickConfig.delays = kickDelays.map(x => x + drumkitDelay + kickDelay + kickConstDelay);
+    kickConfig.startPositions = [0];
+    kickConfig.dur = drumkitDur;
+    kickConfig.volume = drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0);
+
+    snareDelay = linlin(rand,0 ,1 , 0, 0.076) + (seedChoose(seed, [-1.5,1.5]) * drumkitDelayModifier / 30);
+    snareConfig.name = "snare";
+    snareConfig.filename = snareBaseUrl + seedChoose(seed, snares); // 'snares' is declared snares-filenames.js
+    snareConfig.pattern  = snarePattern;
+    snareConfig.delays  = snareDelays.map(x => x + drumkitDelay + snareDelay + snareConstDelay);
+    snareConfig.startPositions = [0];
+    snareConfig.dur = drumkitDur;
+    snareConfig.volume = drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0);
+
+    hihatDelay = linlin(rand, 0, 1, -0.01, 0.05 + 0.005 * drumkitDelayModifier);
+    hihatConfig.name = "hihat";
+    hihatConfig.filename = hihatBaseUrl + seedChoose(seed, hats); // 'hats' is declared in hats-filenames.js
+    hihatConfig.pattern = hihatPattern;
+    hihatConfig.delays = hihatDelays.map(x => x + drumkitDelay + hihatDelay + hihatConstDelay);
+    hihatConfig.startPositions = [0];
+    hihatConfig.dur = drumkitDur;
+    hihatConfig.volume = drumkitVolume * linlin(rand, 0, 1, 0.2, 1.0);
+}
 
 function newPlayer (playerConfig) {
     const buf = new Tone.ToneAudioBuffer(playerConfig.filename, () => {
@@ -105,8 +182,6 @@ function newPlayer (playerConfig) {
             // chop in 4 beats per measure
             const numBeats = 4 * numMeasures;
             const chunks = playerConfig.name == "lyrics" ? [0] : chop(buf.duration, numBeats);
-            // const partA = choosen(chunks, numSlices);
-            // const partB = choosen(chunks, numSlices);
             const partA = perlinChoosen(chunks, numSlices, playerConfig.startPositionsDelta);
             const partB = perlinChoosen(chunks, numSlices, playerConfig.startPositionsDelta);
             playerConfig.startPositions = createScore(partA, partB);
@@ -114,7 +189,6 @@ function newPlayer (playerConfig) {
             playerConfig.pattern = [];
             playerConfig.pattern.length = playerConfig.startPositions.length;
             playerConfig.pattern.fill(1);
-            // playerConfig.rate = sampleStretchRatioAccordingToPau( buf.duration, bpm ) * (playerConfig.name == "bass"? 1 : 2);
             playerConfig.rate = sampleStretchRatio( buf.duration, bpm ) * (playerConfig.name == "lead"? 2 : 1);
 
             console.debug("parts:\n%o\n%o", partA, partB);
@@ -219,106 +293,6 @@ function loop (config) {
     }
 
     return;
-}
-
-function systemSetup() {
-    bpm = linlin(rand, 0, 1, 86,98);
-    rand = seedrand(seed);
-
-    starterFilename = starterBaseUrl + seedChoose(seed, starters);
-    playLead = cs % 2;
-
-    leadConfig.name = "lead";
-    leadConfig.filename = starterFilename;
-    leadConfig.filter  = "highpass";
-    leadConfig.rate = 2;
-    leadConfig.cutoff = linexp(linlin(rand, 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
-    leadConfig.pan = seedChoose(seed, [-0.5,0.5]);
-    leadConfig.delays = [0];
-    leadConfig.startPositions = [0];
-    leadConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
-    leadConfig.legato = linlin(rand, 0, 1, 0.98, 0.99);
-    // leadConfig.dur = beatDur;
-    leadConfig.dur = "4n";
-    leadConfig.volume = 1;
-    leadConfig.play = playLead;
-
-    bassConfig.name = "bass";
-    bassConfig.filename = starterFilename;
-    bassConfig.filter  = "lowpass";
-    bassConfig.rate = 1;
-    // set cutoff to a higher value if lead is not playing
-    bassConfig.cutoff  = linexp(playLead? 80:100, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
-    bassConfig.pan  = linlin(rand, 0,1, -0.09, 0);
-    bassConfig.delays = [0];
-    bassConfig.startPositions = [0];
-    bassConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
-    bassConfig.legato = linlin(rand, 0, 1, 0.97, 0.99);
-    bassConfig.dur = beatDur ;
-    bassConfig.volume = 1;
-
-    lyricsFilename = lyricsBaseUrl + seedChoose(seed, lyrics); //lyrics is declared in lyrics-filenames.js
-    // lyricsFilename = lyricsBaseUrl + "kaseoyemen.wav";
-    lyricsConfig.name = "lyrics";
-    lyricsConfig.filename = lyricsFilename; //"samples/veus/kaseoyemen.wav"//
-    lyricsConfig.rate = 1;
-    // lyricsConfig.filter  = "lowpass";
-    // lyricsConfig.cutoff = linexp(linlin(rand, 0,1, 80,90), sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
-    lyricsConfig.pan = seedChoose(seed, [-0.5,0.5]);
-    lyricsConfig.delays = [0];
-    lyricsConfig.startPositions = [0];
-    lyricsConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
-    lyricsConfig.legato = linlin(rand, 0, 1, 0.6, 0.8);
-    lyricsConfig.legato = 1;
-
-    // TODO: modify duration
-    // lyricsConfig.dur = Tone.Time(Tone.Time(beatDur) * 32).toNotation();
-
-    // lyricsConfig.volume = 1;
-
-    // lyricsConfig.name = "lyrics";
-    // lyricsConfig.filename = starterFilename;
-    // lyricsConfig.filter  = "lowpass";
-    // lyricsConfig.rate = 1;
-    // // set cutoff to a higher value if lead is not playing
-    // lyricsConfig.cutoff  = linexp(playLead? 80:100, sonicPiFilterMin, sonicPiFilterMax, hzMin, hzMax);
-    // lyricsConfig.pan  = linlin(rand, 0,1, -0.09, 0);
-    // lyricsConfig.delays = [0];
-    // lyricsConfig.startPositions = [0];
-    // lyricsConfig.startPositionsDelta = cs; ///< determines if the startpositions are contiguous or far appart
-    lyricsConfig.dur = "32m";
-    // lyricsConfig.volume = 1;
-
-
-    drumkitDelayModifier = cb;
-    drumkitDelay = linlin(rand,0 ,1 , 0, 0.05) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 90);
-
-    kickDelay = linlin(rand,0 ,1 , 0, 0.087) + (seedChoose(seed, [-1,1]) * drumkitDelayModifier / 30);
-    kickConfig.name = "kick";
-    kickConfig.filename = kickBaseUrl + seedChoose(seed, kicks); // 'kicks' is declared in kick-filenames.js
-    kickConfig.pattern  = kickPattern;
-    kickConfig.delays = kickDelays.map(x => x + drumkitDelay + kickDelay);
-    kickConfig.startPositions = [0];
-    kickConfig.dur = drumkitDur;
-    kickConfig.volume = drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0);
-
-    snareDelay = linlin(rand,0 ,1 , 0, 0.076) + (seedChoose(seed, [-1.5,1.5]) * drumkitDelayModifier / 30);
-    snareConfig.name = "snare";
-    snareConfig.filename = snareBaseUrl + seedChoose(seed, snares); // 'snares' is declared snares-filenames.js
-    snareConfig.pattern  = snarePattern;
-    snareConfig.delays  = snareDelays.map(x => x + drumkitDelay + snareDelay);
-    snareConfig.startPositions = [0];
-    snareConfig.dur = drumkitDur;
-    snareConfig.volume = drumkitVolume * linlin(rand, 0, 1, 1.8, 2.0);
-
-    hihatDelay = linlin(rand, 0, 1, -0.01, 0.05 + 0.005 * drumkitDelayModifier);
-    hihatConfig.name = "hihat";
-    hihatConfig.filename = hihatBaseUrl + seedChoose(seed, hats); // 'hats' is declared in hats-filenames.js
-    hihatConfig.pattern = hihatPattern;
-    hihatConfig.delays = hihatDelays.map(x => x + drumkitDelay + hihatDelay);
-    hihatConfig.startPositions = [0];
-    hihatConfig.dur = drumkitDur;
-    hihatConfig.volume = drumkitVolume * linlin(rand, 0, 1, 0.2, 2.0);
 }
 
 /// \brief  play the thing.
